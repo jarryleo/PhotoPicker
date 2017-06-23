@@ -16,3 +16,6 @@ allprojects {
   
   依赖：
    compile 'com.github.jarryleo:PhotoPicker:-SNAPSHOT'
+
+调用方法：
+   PhotoPicker.selectPic(上下文，选择图片张数，是否裁剪，裁剪宽，裁剪高，图片地址回调)；
