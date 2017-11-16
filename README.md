@@ -18,7 +18,7 @@ allprojects {
   
   依赖：
   {
-#  	compile 'com.github.jarryleo:PhotoPicker:-SNAPSHOT'
+##  	compile 'com.github.jarryleo:PhotoPicker:v1.0'
   }
    
 
