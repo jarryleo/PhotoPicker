@@ -148,7 +148,7 @@ public class PhotoFolderPopupWindow extends PopupWindow implements
 
         public void setData(String s) {
             List<String> fNum = mAllFile.get(s);
-            if ("全部照片".equals(s)) {
+            if ("全部".equals(s) ) {
                 fNum = PhotoProvider.getAllPhotos(mAllFile);
             }
             tv_name.setText(s);

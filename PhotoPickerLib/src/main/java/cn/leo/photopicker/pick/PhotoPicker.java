@@ -1,7 +1,6 @@
 package cn.leo.photopicker.pick;
 
 import android.app.Activity;
-import android.support.annotation.NonNull;
 
 import cn.leo.photopicker.activity.TakePhotoActivity;
 
@@ -11,27 +10,75 @@ import cn.leo.photopicker.activity.TakePhotoActivity;
 
 public class PhotoPicker {
 
-    /**
-     * @param context
-     * @param picNum     选择图片张数 大于1位多选，1 为单选
-     * @param crop       是否裁剪 ，只对单选有效
-     * @param cropWidth  裁剪宽度，只对单选有效
-     * @param cropHeight 裁剪高度，只对单选有效
-     * @param callBack   选择图片回调
-     */
-    public static void selectPic(Activity context, int picNum, boolean crop, int cropWidth, int cropHeight, @NonNull PicCallBack callBack) {
-        PhotoOptions options = new PhotoOptions();
-        options.crop = crop;
-        options.takeNum = picNum;
-        options.cropWidth = cropWidth;
-        options.cropHeight = cropHeight;
-        TakePhotoActivity.startSelect(context, options, callBack);
-
+    public static SelectPhoto selectPhoto(Activity context) {
+        return new SelectPhoto(context);
     }
 
-    public interface PicCallBack {
-        void onPicSelected(String[] path);
+    public static SelectVideo selectVideo(Activity context) {
+        return new SelectVideo(context);
+    }
 
-        //void onFailed();
+    public interface PhotoCallBack {
+        void onPicSelected(String[] path);
+    }
+
+
+    public static class SelectPhoto {
+        private Activity mActivity;
+        private PhotoOptions options = new PhotoOptions();
+
+        private SelectPhoto(Activity activity) {
+            mActivity = activity;
+        }
+
+        public SelectPhoto crop(int cropWidth, int cropHeight) {
+            options.crop = true;
+            options.cropWidth = cropWidth;
+            options.cropHeight = cropHeight;
+            return this;
+        }
+
+        public SelectPhoto multi(int multi) {
+            options.takeNum = multi;
+            return this;
+        }
+
+        public SelectPhoto sizeLimit(int size) {
+            options.size = size;
+            return this;
+        }
+
+        public void take(PhotoCallBack callBack) {
+            TakePhotoActivity.startSelect(mActivity, options, callBack);
+        }
+    }
+
+    public static class SelectVideo {
+        private Activity mActivity;
+        private PhotoOptions options = new PhotoOptions();
+
+        private SelectVideo(Activity activity) {
+            mActivity = activity;
+            options.type = PhotoOptions.TYPE_VIDEO;
+        }
+
+        public SelectVideo multi(int multi) {
+            options.takeNum = multi;
+            return this;
+        }
+
+        public SelectVideo maxDuration(int duration) {
+            options.duration = duration;
+            return this;
+        }
+
+        public SelectVideo sizeLimit(int size) {
+            options.size = size;
+            return this;
+        }
+
+        public void take(PhotoCallBack callBack) {
+            TakePhotoActivity.startSelect(mActivity, options, callBack);
+        }
     }
 }

@@ -32,6 +32,7 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -42,6 +43,7 @@ import cn.leo.photopicker.pick.PhotoFolderPopupWindow;
 import cn.leo.photopicker.pick.PhotoOptions;
 import cn.leo.photopicker.pick.PhotoPicker;
 import cn.leo.photopicker.pick.PhotoProvider;
+import cn.leo.photopicker.pick.VideoUtil;
 
 public class TakePhotoActivity extends Activity implements View.OnClickListener, AdapterView.OnItemClickListener {
     private static final String EXTRA_STARTING_ALBUM_POSITION = "extra_starting_item_position";
@@ -57,7 +59,7 @@ public class TakePhotoActivity extends Activity implements View.OnClickListener,
     private GVAdapter mAdapter;
     private String mCamImageName;
     private static PhotoOptions photoOptions;
-    private static PhotoPicker.PicCallBack picCallBack;
+    private static PhotoPicker.PhotoCallBack picCallBack;
     private TextView mBtnComplete;
     private LinearLayout mLlTitleContainer;
     private HashMap<String, ImageView> imageViews = new HashMap<>();
@@ -81,8 +83,8 @@ public class TakePhotoActivity extends Activity implements View.OnClickListener,
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             win.addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);//透明状态栏
             // 状态栏字体设置为深色，SYSTEM_UI_FLAG_LIGHT_STATUS_BAR 为SDK23增加
-            win.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN |
-                    View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+            win.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN /*|
+                    View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR*/);
             //win.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN); //不调节状态栏文字颜色
             // 部分机型的statusbar会有半透明的黑色背景
             win.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
@@ -121,7 +123,7 @@ public class TakePhotoActivity extends Activity implements View.OnClickListener,
      * @param options
      */
     public static void startSelect(Activity context, PhotoOptions options,
-                                   PhotoPicker.PicCallBack callBack) {
+                                   PhotoPicker.PhotoCallBack callBack) {
         photoOptions = options;
         picCallBack = callBack;
         context.startActivity(new Intent(context, TakePhotoActivity.class));
@@ -133,8 +135,12 @@ public class TakePhotoActivity extends Activity implements View.OnClickListener,
         new Thread() {
             @Override
             public void run() {
-                String title = "全部照片";
-                mDiskPhotos = PhotoProvider.getDiskPhotos(TakePhotoActivity.this);
+                String title = "全部";
+                if (photoOptions.type == PhotoOptions.TYPE_PHOTO) {
+                    mDiskPhotos = PhotoProvider.getDiskPhotos(TakePhotoActivity.this);
+                } else {
+                    mDiskPhotos = PhotoProvider.getDiskVideos(TakePhotoActivity.this);
+                }
                 if (mDiskPhotos.containsKey("Camera")) {
                     mAllPhotos = mDiskPhotos.get("Camera");
                     title = "Camera";
@@ -218,7 +224,7 @@ public class TakePhotoActivity extends Activity implements View.OnClickListener,
                         popupWindow.dismiss();
 
                         mAllPhotos = mDiskPhotos.get(folder);
-                        if ("全部照片".equals(folder)) {
+                        if ("全部".equals(folder)) {
                             mAllPhotos = PhotoProvider.getAllPhotos(mDiskPhotos);
                         }
                         mTvTitle.setText(folder);
@@ -303,19 +309,27 @@ public class TakePhotoActivity extends Activity implements View.OnClickListener,
             Toast.makeText(this, "无法保存照片，请检查SD卡是否挂载", Toast.LENGTH_LONG).show();
             return;
         }
-
-        mCamImageName = CropUtil.getSaveImageFullName();
+        if (photoOptions.type == PhotoOptions.TYPE_PHOTO) {
+            mCamImageName = CropUtil.getSaveImageFullName();
+        } else {
+            mCamImageName = CropUtil.getSaveVideoFullName();
+        }
         File out = new File(savePath, mCamImageName);
         /**
          * android N 系统适配
          */
-        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        Intent intent = new Intent();
         Uri uri;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             String provider = getPackageName() + ".provider";
             uri = FileProvider.getUriForFile(this, provider, out);
         } else {
             uri = Uri.fromFile(out);
+        }
+        if (photoOptions.type == PhotoOptions.TYPE_VIDEO) {
+            intent.setAction(MediaStore.ACTION_VIDEO_CAPTURE);
+        } else {
+            intent.setAction(MediaStore.ACTION_IMAGE_CAPTURE);
         }
         intent.putExtra(MediaStore.EXTRA_OUTPUT, uri);
         startActivityForResult(intent, 0x03);
@@ -332,6 +346,15 @@ public class TakePhotoActivity extends Activity implements View.OnClickListener,
                     mAllPhotos.add(0, path);
                     mAdapter.notifyDataSetChanged();
                     //通知系统相册更新
+                    // 其次把文件插入到系统图库
+                    try {
+                        if (photoOptions.type == PhotoOptions.TYPE_PHOTO) {
+                            MediaStore.Images.Media.insertImage(getContentResolver(),
+                                    path, mCamImageName, null);
+                        }
+                    } catch (FileNotFoundException e) {
+                        e.printStackTrace();
+                    }
                     Uri localUri = Uri.fromFile(new File(path));
                     Intent localIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, localUri);
                     sendBroadcast(localIntent);
@@ -395,6 +418,7 @@ public class TakePhotoActivity extends Activity implements View.OnClickListener,
             View itemView;
             ImageView mIvPhoto;
             CheckBox mCbCheck;
+            TextView mTvDuration;
             String mPath;
 
             public ViewHolder(View itemView) {
@@ -408,6 +432,7 @@ public class TakePhotoActivity extends Activity implements View.OnClickListener,
                 itemView.setTag(this);
                 mIvPhoto = (ImageView) itemView.findViewById(R.id.item_iv_photo);
                 mCbCheck = (CheckBox) itemView.findViewById(R.id.item_cb_check);
+                mTvDuration = (TextView) itemView.findViewById(R.id.tv_video_duration);
                 mCbCheck.setOnCheckedChangeListener(this);
             }
 
@@ -425,9 +450,17 @@ public class TakePhotoActivity extends Activity implements View.OnClickListener,
                         .crossFade()
                         .centerCrop()
                         .into(mIvPhoto);
+                if (photoOptions.type == PhotoOptions.TYPE_VIDEO) {
+                    mTvDuration.setVisibility(View.VISIBLE);
+                    VideoUtil.VideoInfo videoInfo = VideoUtil.videoInfo(TakePhotoActivity.this, path);
+                    mTvDuration.setText(videoInfo.getTime());
+                } else {
+                    mTvDuration.setVisibility(View.GONE);
+                }
             }
 
             public void setCameraPic() {
+                mTvDuration.setVisibility(View.GONE);
                 mCbCheck.setVisibility(View.GONE);
                 mIvPhoto.setImageResource(R.mipmap.ic_tweet_select_picture_camera);
             }
@@ -441,8 +474,14 @@ public class TakePhotoActivity extends Activity implements View.OnClickListener,
                     if (mSelectPhotos.size() < photoOptions.takeNum) {
                         mSelectPhotos.add(mPath);
                     } else {
+                        String s = "张照片！";
+                        if (photoOptions.type == PhotoOptions.TYPE_VIDEO) {
+                            s = "个视频！";
+                        }
                         Toast.makeText(TakePhotoActivity.this,
-                                "您最多只能选择" + photoOptions.takeNum + "张照片！",
+                                "您最多只能选择" +
+                                        photoOptions.takeNum +
+                                        s,
                                 Toast.LENGTH_SHORT).show();
                         mCbCheck.setChecked(false);
                     }

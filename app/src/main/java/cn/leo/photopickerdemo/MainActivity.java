@@ -37,7 +37,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void selectSinglePhotoCrop(View v) {
         //选择一张图片并裁剪
-        PhotoPicker.selectPic(this, 1, true, 600, 600, new PhotoPicker.PicCallBack() {
+        PhotoPicker.selectPhoto(this).crop(600, 600).take(new PhotoPicker.PhotoCallBack() {
             @Override
             public void onPicSelected(String[] path) {
                 Glide.with(MainActivity.this)
@@ -51,7 +51,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void selectSinglePhoto(View v) {
         //选择一张图片不裁剪
-        PhotoPicker.selectPic(this, 1, false, 0, 0, new PhotoPicker.PicCallBack() {
+        PhotoPicker.selectVideo(this).take(new PhotoPicker.PhotoCallBack() {
             @Override
             public void onPicSelected(String[] path) {
                 Glide.with(MainActivity.this)
@@ -65,7 +65,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void multSelect(View v) {
         //选择多张图片
-        PhotoPicker.selectPic(this, 3, false, 0, 0, new PhotoPicker.PicCallBack() {
+        PhotoPicker.selectPhoto(this).multi(3).take(new PhotoPicker.PhotoCallBack() {
 
             @Override
             public void onPicSelected(String[] path) {

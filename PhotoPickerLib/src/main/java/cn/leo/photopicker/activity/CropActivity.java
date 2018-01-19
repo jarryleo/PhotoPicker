@@ -20,13 +20,13 @@ import cn.leo.photopicker.R;
 import cn.leo.photopicker.crop.CropLayout;
 import cn.leo.photopicker.crop.CropUtil;
 import cn.leo.photopicker.crop.ZoomImageView;
-import cn.leo.photopicker.pick.PhotoPicker;
 import cn.leo.photopicker.pick.PhotoOptions;
+import cn.leo.photopicker.pick.PhotoPicker;
 
 public class CropActivity extends Activity implements View.OnClickListener {
 
     private static PhotoOptions photoOptions;
-    private static PhotoPicker.PicCallBack picCallBack;
+    private static PhotoPicker.PhotoCallBack picCallBack;
     private CropLayout mGl;
     private Button btn1;
     private Button btn2;
@@ -51,7 +51,7 @@ public class CropActivity extends Activity implements View.OnClickListener {
      */
     public static void startSelect(Activity context, String url,
                                    PhotoOptions options,
-                                   PhotoPicker.PicCallBack callBack) {
+                                   PhotoPicker.PhotoCallBack callBack) {
         mUrl = url;
         photoOptions = options;
         picCallBack = callBack;
@@ -75,7 +75,7 @@ public class CropActivity extends Activity implements View.OnClickListener {
         if (v == btn1) {
             Bitmap bitmap = mGl.cropBitmap();
             //mIv.setImageBitmap(bitmap);
-            String path = CropUtil.getCachePath() + CropUtil.getSaveImageFullName();
+            String path = CropUtil.getCachePath() + new File(mUrl).getName();
             FileOutputStream fos = null;
             try {
                 fos = new FileOutputStream(new File(path));

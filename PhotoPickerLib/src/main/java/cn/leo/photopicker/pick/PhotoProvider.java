@@ -53,6 +53,42 @@ public class PhotoProvider {
         return allPic;
     }
 
+
+    /**
+     * 获取含有文件夹层级的所有视频列表
+     *
+     * @param context
+     * @return
+     */
+    public static HashMap<String, ArrayList<String>> getDiskVideos(Activity context) {
+        HashMap<String, ArrayList<String>> allPic = new LinkedHashMap<>();
+        Uri mImageUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
+        ContentResolver mContentResolver = context.getContentResolver();
+        Cursor mCursor = mContentResolver.query(mImageUri, null, MediaStore.Video.Media.MIME_TYPE
+                        + " in ('video/mp4','video/3gp') and " + MediaStore.Video.Media.SIZE + " >0 ",
+                null, MediaStore.Video.Media.DATE_ADDED + " desc");
+        if (mCursor != null) {
+            while (mCursor.moveToNext()) {
+                // 获取视频的路径
+                String path = mCursor.getString(mCursor.getColumnIndex(MediaStore.Images.Media.DATA));
+                File picFile = new File(path);
+                if (picFile.exists()) {
+                    String parentName = picFile.getParentFile().getName();
+
+                    if (allPic.containsKey(parentName)) {
+                        allPic.get(parentName).add(path);
+                    } else {
+                        ArrayList<String> chileList = new ArrayList<String>();
+                        chileList.add(path);
+                        allPic.put(parentName, chileList);
+                    }
+                }
+            }
+            mCursor.close();
+        }
+        return allPic;
+    }
+
     /**
      * 获取所有图片的文件夹名字
      *
@@ -63,9 +99,8 @@ public class PhotoProvider {
         if (photos == null) return null;
         ArrayList<String> dirs = new ArrayList<>();
         Set<String> set = photos.keySet();
-        dirs.add("全部照片");
-        for (String dir : set
-                ) {
+        dirs.add("全部");
+        for (String dir : set) {
             dirs.add(dir);
         }
         return dirs;

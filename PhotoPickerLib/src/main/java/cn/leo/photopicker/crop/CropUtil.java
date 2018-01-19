@@ -49,6 +49,11 @@ public class CropUtil {
                 .format(new Date()) + ".jpg";// 照片命名
     }
 
+    public static String getSaveVideoFullName() {
+        return "VIDEO_" + new SimpleDateFormat("yyyyMMdd_HHmmss")
+                .format(new Date()) + ".mp4";// 视频命名
+    }
+
 
     public static int getScreenWidth(Context context) {
         return context.getResources().getDisplayMetrics().widthPixels;
