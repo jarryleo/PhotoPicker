@@ -3,12 +3,12 @@ package cn.leo.photopicker.activity;
 import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
-import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.provider.MediaStore;
 import android.support.v4.app.ActivityOptionsCompat;
 import android.support.v4.content.FileProvider;
@@ -39,6 +39,7 @@ import java.util.HashMap;
 
 import cn.leo.photopicker.R;
 import cn.leo.photopicker.crop.CropUtil;
+import cn.leo.photopicker.pick.MediaStoreContentObserver;
 import cn.leo.photopicker.pick.PermissionUtil;
 import cn.leo.photopicker.pick.PhotoFolderPopupWindow;
 import cn.leo.photopicker.pick.PhotoOptions;
@@ -65,6 +66,7 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
     private LinearLayout mLlTitleContainer;
     private HashMap<String, ImageView> imageViews = new HashMap<>();
     private VideoUtil mVideoUtil;
+    private MediaStoreContentObserver mMediaStoreContentObserver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -134,6 +136,20 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
         mVideoUtil = new VideoUtil(this);
         mAdapter = new GVAdapter();
         mGvPhotos.setAdapter(mAdapter);
+        refreshData();
+        mMediaStoreContentObserver = new MediaStoreContentObserver(this, new Handler());
+        Uri imageUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
+        getContentResolver().registerContentObserver(imageUri, false,
+                mMediaStoreContentObserver);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        getContentResolver().unregisterContentObserver(mMediaStoreContentObserver);
+    }
+
+    public void refreshData() {
         new Thread() {
             @Override
             public void run() {
