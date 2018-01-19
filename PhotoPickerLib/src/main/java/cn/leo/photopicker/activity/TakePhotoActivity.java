@@ -3,6 +3,7 @@ package cn.leo.photopicker.activity;
 import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.net.Uri;
@@ -45,7 +46,7 @@ import cn.leo.photopicker.pick.PhotoPicker;
 import cn.leo.photopicker.pick.PhotoProvider;
 import cn.leo.photopicker.pick.VideoUtil;
 
-public class TakePhotoActivity extends Activity implements View.OnClickListener, AdapterView.OnItemClickListener {
+public class TakePhotoActivity extends AppCompatActivity implements View.OnClickListener, AdapterView.OnItemClickListener {
     private static final String EXTRA_STARTING_ALBUM_POSITION = "extra_starting_item_position";
     private static final String EXTRA_CURRENT_ALBUM_POSITION = "extra_current_item_position";
     private ImageView mIvBack;
@@ -63,7 +64,7 @@ public class TakePhotoActivity extends Activity implements View.OnClickListener,
     private TextView mBtnComplete;
     private LinearLayout mLlTitleContainer;
     private HashMap<String, ImageView> imageViews = new HashMap<>();
-
+    private VideoUtil mVideoUtil;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -130,6 +131,7 @@ public class TakePhotoActivity extends Activity implements View.OnClickListener,
     }
 
     private void initData() {
+        mVideoUtil = new VideoUtil(this);
         mAdapter = new GVAdapter();
         mGvPhotos.setAdapter(mAdapter);
         new Thread() {
@@ -139,7 +141,7 @@ public class TakePhotoActivity extends Activity implements View.OnClickListener,
                 if (photoOptions.type == PhotoOptions.TYPE_PHOTO) {
                     mDiskPhotos = PhotoProvider.getDiskPhotos(TakePhotoActivity.this);
                 } else {
-                    mDiskPhotos = PhotoProvider.getDiskVideos(TakePhotoActivity.this);
+                    mDiskPhotos = PhotoProvider.getDiskVideos(TakePhotoActivity.this, mVideoUtil);
                 }
                 if (mDiskPhotos.containsKey("Camera")) {
                     mAllPhotos = mDiskPhotos.get("Camera");
@@ -253,6 +255,29 @@ public class TakePhotoActivity extends Activity implements View.OnClickListener,
             toOpenCamera();
 
         } else {
+            //视频预览
+            if (photoOptions.type == PhotoOptions.TYPE_VIDEO) {
+                File file = new File(mAllPhotos.get(position - 1));
+                Intent intent = new Intent(Intent.ACTION_VIEW);
+                Uri uri;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    Uri contentUri = FileProvider.getUriForFile(this,
+                            getApplicationContext().getPackageName() + ".provider", file);
+                    intent.setDataAndType(contentUri, "video/mp4");
+                } else {
+                    uri = Uri.fromFile(file);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    intent.setDataAndType(uri, "video/mp4");
+                }
+                try {
+                    startActivity(intent);
+                } catch (Exception e) {
+                    Toast.makeText(this, "没有默认播放器,无法预览", Toast.LENGTH_SHORT).show();
+                }
+                return;
+            }
+
             //点击一张照片
             String path = mAllPhotos.get(position - 1);
             ArrayList<String> pathList = new ArrayList<>();
@@ -452,8 +477,8 @@ public class TakePhotoActivity extends Activity implements View.OnClickListener,
                         .into(mIvPhoto);
                 if (photoOptions.type == PhotoOptions.TYPE_VIDEO) {
                     mTvDuration.setVisibility(View.VISIBLE);
-                    VideoUtil.VideoInfo videoInfo = VideoUtil.videoInfo(TakePhotoActivity.this, path);
-                    mTvDuration.setText(videoInfo.getTime());
+                    //读取时长和大小
+                    mTvDuration.setText(mVideoUtil.getTime(path));
                 } else {
                     mTvDuration.setVisibility(View.GONE);
                 }
@@ -470,6 +495,23 @@ public class TakePhotoActivity extends Activity implements View.OnClickListener,
                 if (isChecked) {
                     if (mSelectPhotos.contains(mPath)) {
                         return;
+                    }
+                    if (photoOptions.type == PhotoOptions.TYPE_VIDEO) {
+                        VideoUtil.VideoInfo videoInfo = mVideoUtil.getVideoInfo(mPath);
+                        if (photoOptions.duration > 0 &&
+                                videoInfo.duration > photoOptions.duration) {
+                            Toast.makeText(TakePhotoActivity.this,
+                                    "你选择的视频时长超出限制",
+                                    Toast.LENGTH_SHORT).show();
+                            mCbCheck.setChecked(false);
+                        }
+                        if (photoOptions.size > 0 &&
+                                videoInfo.size > photoOptions.size) {
+                            Toast.makeText(TakePhotoActivity.this,
+                                    "你选择的视频大小超出限制",
+                                    Toast.LENGTH_SHORT).show();
+                            mCbCheck.setChecked(false);
+                        }
                     }
                     if (mSelectPhotos.size() < photoOptions.takeNum) {
                         mSelectPhotos.add(mPath);

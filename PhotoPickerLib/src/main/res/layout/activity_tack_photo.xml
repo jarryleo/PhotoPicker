@@ -54,8 +54,13 @@
             android:layout_centerVertical="true"
             android:layout_marginRight="8dp"
             android:background="@drawable/selector_btn_complete"
-            android:padding="8dp"
-            android:text="完成(0/5)"
+            android:minWidth="60dp"
+            android:gravity="center"
+            android:paddingBottom="6dp"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:paddingTop="6dp"
+            android:text="完成"
             android:textColor="@android:color/white"/>
     </RelativeLayout>
 

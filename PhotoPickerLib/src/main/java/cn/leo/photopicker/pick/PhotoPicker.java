@@ -29,6 +29,7 @@ public class PhotoPicker {
 
         private SelectPhoto(Activity activity) {
             mActivity = activity;
+
         }
 
         public SelectPhoto crop(int cropWidth, int cropHeight) {

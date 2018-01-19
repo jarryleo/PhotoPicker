@@ -5,6 +5,7 @@ import android.content.ContentResolver;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.MediaStore;
+import android.support.v7.widget.ViewUtils;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -18,6 +19,7 @@ import java.util.Set;
  */
 
 public class PhotoProvider {
+
     /**
      * 获取含有文件夹层级的所有图片列表
      *
@@ -60,17 +62,17 @@ public class PhotoProvider {
      * @param context
      * @return
      */
-    public static HashMap<String, ArrayList<String>> getDiskVideos(Activity context) {
+    public static HashMap<String, ArrayList<String>> getDiskVideos(Activity context, VideoUtil videoUtil) {
         HashMap<String, ArrayList<String>> allPic = new LinkedHashMap<>();
         Uri mImageUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
         ContentResolver mContentResolver = context.getContentResolver();
-        Cursor mCursor = mContentResolver.query(mImageUri, null, MediaStore.Video.Media.MIME_TYPE
-                        + " in ('video/mp4','video/3gp') and " + MediaStore.Video.Media.SIZE + " >0 ",
+        Cursor cursor = mContentResolver.query(mImageUri, null, MediaStore.Video.Media.MIME_TYPE
+                        + " in ('video/mp4') and " + MediaStore.Video.Media.SIZE + " >0 ",
                 null, MediaStore.Video.Media.DATE_ADDED + " desc");
-        if (mCursor != null) {
-            while (mCursor.moveToNext()) {
+        if (cursor != null) {
+            while (cursor.moveToNext()) {
                 // 获取视频的路径
-                String path = mCursor.getString(mCursor.getColumnIndex(MediaStore.Images.Media.DATA));
+                String path = cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.DATA));
                 File picFile = new File(path);
                 if (picFile.exists()) {
                     String parentName = picFile.getParentFile().getName();
@@ -83,8 +85,11 @@ public class PhotoProvider {
                         allPic.put(parentName, chileList);
                     }
                 }
+                int size = cursor.getInt(cursor.getColumnIndex(MediaStore.Video.Media.SIZE));
+                int duration = cursor.getInt(cursor.getColumnIndex(MediaStore.Video.Media.DURATION));
+                videoUtil.put(path, new VideoUtil.VideoInfo(size, duration));
             }
-            mCursor.close();
+            cursor.close();
         }
         return allPic;
     }
