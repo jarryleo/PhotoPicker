@@ -219,12 +219,12 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
         if (v == mBtnComplete) {
             String[] p = new String[mSelectPhotos.size()];
             mSelectPhotos.toArray(p);
-            finish();
             //单选并裁剪
             if (photoOptions.crop && photoOptions.takeNum < 2) {
                 if (p.length == 1) {
                     CropActivity.startSelect(this, p[0], photoOptions, picCallBack);
                 }
+                finish();
             } else {
                 //完成选择
                 if (mSelectPhotos.size() > 0) {
@@ -233,6 +233,7 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
                         compress();
                     } else {
                         picCallBack.onPicSelected(p);
+                        finish();
                     }
                 }
             }
@@ -245,6 +246,7 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
             String[] compressPaths = (String[]) msg.obj;
             picCallBack.onPicSelected(compressPaths);
             mProgressDialog.dismiss();
+            finish();
             return true;
         }
     });
