@@ -44,8 +44,14 @@ public class PhotoPicker {
             return this;
         }
 
-        public SelectPhoto sizeLimit(int size) {
+        /*public SelectPhoto sizeLimit(int size) {
             options.size = size;
+            return this;
+        }*/
+
+        public SelectPhoto compress(int width, int height) {
+            options.compressWidth = width;
+            options.compressHeight = height;
             return this;
         }
 

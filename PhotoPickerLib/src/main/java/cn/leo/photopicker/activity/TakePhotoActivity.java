@@ -39,6 +39,7 @@ import java.util.HashMap;
 
 import cn.leo.photopicker.R;
 import cn.leo.photopicker.crop.CropUtil;
+import cn.leo.photopicker.pick.ImageCompressUtil;
 import cn.leo.photopicker.pick.MediaStoreContentObserver;
 import cn.leo.photopicker.pick.PermissionUtil;
 import cn.leo.photopicker.pick.PhotoFolderPopupWindow;
@@ -218,14 +219,26 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
             finish();
             //单选并裁剪
             if (photoOptions.crop && photoOptions.takeNum < 2) {
-                if (p.length == 1)
+                if (p.length == 1) {
                     CropActivity.startSelect(this, p[0], photoOptions, picCallBack);
-            } else if (photoOptions.takeNum < 2) {
-                //单选不开启裁剪
-                picCallBack.onPicSelected(p);
+                }
             } else {
-                //完成图片多选
-                picCallBack.onPicSelected(p);
+                //完成选择
+                if (mSelectPhotos.size() > 0) {
+                    if (photoOptions.compressWidth > 0 && photoOptions.compressHeight > 0) {
+                        //需要压缩
+                        String[] compressPaths = new String[mSelectPhotos.size()];
+                        for (int i = 0; i < mSelectPhotos.size(); i++) {
+                            String selectPhoto = mSelectPhotos.get(i);
+                            String descPath = CropUtil.getCachePath() + new File(selectPhoto).getName();
+                            ImageCompressUtil.compressPx(selectPhoto, descPath, photoOptions);
+                            compressPaths[i] = descPath;
+                        }
+                        picCallBack.onPicSelected(compressPaths);
+                    } else {
+                        picCallBack.onPicSelected(p);
+                    }
+                }
             }
         }
     }

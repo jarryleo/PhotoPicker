@@ -14,4 +14,6 @@ public class PhotoOptions {
     public int type;
     public int duration;
     public int size;
+    public int compressWidth;
+    public int compressHeight;
 }

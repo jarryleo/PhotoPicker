@@ -65,7 +65,10 @@ public class MainActivity extends AppCompatActivity {
 
     public void multSelect(View v) {
         //选择多张图片
-        PhotoPicker.selectPhoto(this).multi(3).take(new PhotoPicker.PhotoCallBack() {
+        PhotoPicker.selectPhoto(this)
+                .multi(3)
+                .compress(100,100)
+                .take(new PhotoPicker.PhotoCallBack() {
 
             @Override
             public void onPicSelected(String[] path) {

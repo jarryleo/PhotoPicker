@@ -3,11 +3,9 @@ package cn.leo.photopicker.crop;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.os.AsyncTask;
 import android.os.Environment;
-import android.widget.ImageView;
 
-import java.lang.ref.WeakReference;
+import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -40,7 +38,12 @@ public class CropUtil {
      * @return
      */
     public static String getCachePath() {
-        return Environment.getExternalStorageDirectory().getAbsolutePath() + "/Cache/";
+        String cachePath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Cache/";
+        File cacheDir = new File(cachePath);
+        if (!cacheDir.exists()) {
+            cacheDir.mkdirs();
+        }
+        return cachePath;
     }
 
 
