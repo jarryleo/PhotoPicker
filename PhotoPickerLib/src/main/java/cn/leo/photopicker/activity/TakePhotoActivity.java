@@ -2,6 +2,7 @@ package cn.leo.photopicker.activity;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Rect;
@@ -9,6 +10,8 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
 import android.provider.MediaStore;
 import android.support.v4.app.ActivityOptionsCompat;
 import android.support.v4.content.FileProvider;
@@ -227,20 +230,45 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
                 if (mSelectPhotos.size() > 0) {
                     if (photoOptions.compressWidth > 0 && photoOptions.compressHeight > 0) {
                         //需要压缩
-                        String[] compressPaths = new String[mSelectPhotos.size()];
-                        for (int i = 0; i < mSelectPhotos.size(); i++) {
-                            String selectPhoto = mSelectPhotos.get(i);
-                            String descPath = CropUtil.getCachePath() + new File(selectPhoto).getName();
-                            ImageCompressUtil.compressPx(selectPhoto, descPath, photoOptions);
-                            compressPaths[i] = descPath;
-                        }
-                        picCallBack.onPicSelected(compressPaths);
+                        compress();
                     } else {
                         picCallBack.onPicSelected(p);
                     }
                 }
             }
         }
+    }
+
+    Handler mHandler = new Handler(Looper.getMainLooper(), new Handler.Callback() {
+        @Override
+        public boolean handleMessage(Message msg) {
+            String[] compressPaths = (String[]) msg.obj;
+            picCallBack.onPicSelected(compressPaths);
+            mProgressDialog.dismiss();
+            return true;
+        }
+    });
+    ProgressDialog mProgressDialog;
+
+    private void compress() {
+        if (mProgressDialog == null) {
+            mProgressDialog = new ProgressDialog(this);
+            mProgressDialog.setTitle("图片压缩中，请稍候...");
+        }
+        mProgressDialog.show();
+        new Thread() {
+            @Override
+            public void run() {
+                String[] compressPaths = new String[mSelectPhotos.size()];
+                for (int i = 0; i < mSelectPhotos.size(); i++) {
+                    String selectPhoto = mSelectPhotos.get(i);
+                    String descPath = CropUtil.getCachePath() + new File(selectPhoto).getName();
+                    ImageCompressUtil.compressPx(selectPhoto, descPath, photoOptions);
+                    compressPaths[i] = descPath;
+                }
+                mHandler.obtainMessage(0, compressPaths).sendToTarget();
+            }
+        }.start();
     }
 
     //图片文件夹选择
@@ -292,7 +320,7 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                     intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                     Uri contentUri = FileProvider.getUriForFile(this,
-                            getApplicationContext().getPackageName() + ".provider", file);
+                            getPackageName() + ".PhotoPickerFileProvider", file);
                     intent.setDataAndType(contentUri, "video/mp4");
                 } else {
                     uri = Uri.fromFile(file);
@@ -375,7 +403,7 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
         Intent intent = new Intent();
         Uri uri;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            String provider = getPackageName() + ".provider";
+            String provider = getPackageName() + ".PhotoPickerFileProvider";
             uri = FileProvider.getUriForFile(this, provider, out);
         } else {
             uri = Uri.fromFile(out);
