@@ -2,19 +2,22 @@ package cn.leo.photopicker.activity;
 
 import android.Manifest;
 import android.app.Activity;
-import android.content.ContentValues;
 import android.content.Intent;
+import android.graphics.Color;
 import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.support.v4.app.ActivityOptionsCompat;
+import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.CheckBox;
@@ -31,50 +34,69 @@ import com.bumptech.glide.Glide;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
 import cn.leo.photopicker.R;
 import cn.leo.photopicker.crop.CropUtil;
 import cn.leo.photopicker.pick.PermissionUtil;
 import cn.leo.photopicker.pick.PhotoFolderPopupWindow;
+import cn.leo.photopicker.pick.PhotoOptions;
 import cn.leo.photopicker.pick.PhotoPicker;
 import cn.leo.photopicker.pick.PhotoProvider;
-import cn.leo.photopicker.pick.PhotoOptions;
 
-public class TackPhotoActivity extends Activity implements View.OnClickListener, AdapterView.OnItemClickListener {
-
+public class TakePhotoActivity extends Activity implements View.OnClickListener, AdapterView.OnItemClickListener {
+    private static final String EXTRA_STARTING_ALBUM_POSITION = "extra_starting_item_position";
+    private static final String EXTRA_CURRENT_ALBUM_POSITION = "extra_current_item_position";
     private ImageView mIvBack;
     private TextView mTvTitle;
     private ImageView mIvArrow;
     private GridView mGvPhotos;
     private RelativeLayout mRlBar;
-    private HashMap<String, List<String>> mDiskPhotos;
-    private List<String> mAllPhotos;
-    private List<String> mSelectPhotos = new ArrayList<>();
+    private HashMap<String, ArrayList<String>> mDiskPhotos;
+    private ArrayList<String> mAllPhotos;
+    private ArrayList<String> mSelectPhotos = new ArrayList<>();
     private GVAdapter mAdapter;
     private String mCamImageName;
-
     private static PhotoOptions photoOptions;
     private static PhotoPicker.PicCallBack picCallBack;
     private TextView mBtnComplete;
     private LinearLayout mLlTitleContainer;
+    private HashMap<String, ImageView> imageViews = new HashMap<>();
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        initStatusBar();
         super.onCreate(savedInstanceState);
         getWindow().requestFeature(Window.FEATURE_NO_TITLE);
+        getWindow().requestFeature(Window.FEATURE_CONTENT_TRANSITIONS);
         setContentView(R.layout.activity_tack_photo);
         initView();
         initEvent();
         initPermission();
     }
 
+    private void initStatusBar() {
+        Window win = getWindow();
+        //KITKAT也能满足，只是SYSTEM_UI_FLAG_LIGHT_STATUS_BAR（状态栏字体颜色反转）只有在6.0才有效
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            win.addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);//透明状态栏
+            // 状态栏字体设置为深色，SYSTEM_UI_FLAG_LIGHT_STATUS_BAR 为SDK23增加
+            win.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN |
+                    View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+            //win.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN); //不调节状态栏文字颜色
+            // 部分机型的statusbar会有半透明的黑色背景
+            win.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+            win.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+            win.setStatusBarColor(Color.TRANSPARENT);// SDK21
+        }
+    }
+
     /**
      * 检查权限
      */
     private void initPermission() {
-        boolean SDpermission = PermissionUtil.checkPremission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
-        if (!SDpermission) {
+        boolean SDPermission = PermissionUtil.checkPremission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        if (!SDPermission) {
             PermissionUtil.requestPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE);
         } else {
             initData();
@@ -85,7 +107,7 @@ public class TackPhotoActivity extends Activity implements View.OnClickListener,
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         boolean result = PermissionUtil.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (!result) {
-            //Toast.makeText(this, "你不同意我读取图片，那我还处理个卵！", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "缺少权限，图片加载失败！", Toast.LENGTH_SHORT).show();
             finish();
         } else {
             initData();
@@ -102,7 +124,7 @@ public class TackPhotoActivity extends Activity implements View.OnClickListener,
                                    PhotoPicker.PicCallBack callBack) {
         photoOptions = options;
         picCallBack = callBack;
-        context.startActivity(new Intent(context, TackPhotoActivity.class));
+        context.startActivity(new Intent(context, TakePhotoActivity.class));
     }
 
     private void initData() {
@@ -111,11 +133,19 @@ public class TackPhotoActivity extends Activity implements View.OnClickListener,
         new Thread() {
             @Override
             public void run() {
-                mDiskPhotos = PhotoProvider.getDiskPhotos(TackPhotoActivity.this);
-                mAllPhotos = PhotoProvider.getAllPhotos(mDiskPhotos);
+                String title = "全部照片";
+                mDiskPhotos = PhotoProvider.getDiskPhotos(TakePhotoActivity.this);
+                if (mDiskPhotos.containsKey("Camera")) {
+                    mAllPhotos = mDiskPhotos.get("Camera");
+                    title = "Camera";
+                } else {
+                    mAllPhotos = PhotoProvider.getAllPhotos(mDiskPhotos);
+                }
+                final String s = title;
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
+                        mTvTitle.setText(s);
                         mAdapter.notifyDataSetChanged();
                     }
                 });
@@ -132,10 +162,13 @@ public class TackPhotoActivity extends Activity implements View.OnClickListener,
         mGvPhotos = (GridView) findViewById(R.id.photo_picker_gv_photos);
         mLlTitleContainer = (LinearLayout) findViewById(R.id.photo_picker_ll_titlecontainer);
         mBtnComplete = (TextView) findViewById(R.id.tv_btn_complete);
-        mBtnComplete.setVisibility(photoOptions.takeNum > 1 ? View.VISIBLE : View.GONE);
-        mBtnComplete.setText("完成(" + mSelectPhotos.size() + "/" + photoOptions.takeNum + ")");
+        //mBtnComplete.setVisibility(photoOptions.takeNum > 1 ? View.VISIBLE : View.GONE);
+        String text = "完成(" + mSelectPhotos.size() + "/" + photoOptions.takeNum + ")";
+        if (photoOptions.crop || photoOptions.takeNum < 2) {
+            text = "完成";
+        }
+        mBtnComplete.setText(text);
     }
-
 
     private void initEvent() {
         mIvBack.setOnClickListener(this);
@@ -156,11 +189,20 @@ public class TackPhotoActivity extends Activity implements View.OnClickListener,
             showDirPopWindow();
         }
         if (v == mBtnComplete) {
-            //完成图片多选
             String[] p = new String[mSelectPhotos.size()];
             mSelectPhotos.toArray(p);
-            picCallBack.onPicSelected(p);
             finish();
+            //单选并裁剪
+            if (photoOptions.crop && photoOptions.takeNum < 2) {
+                if (p.length == 1)
+                    CropActivity.startSelect(this, p[0], photoOptions, picCallBack);
+            } else if (photoOptions.takeNum < 2) {
+                //单选不开启裁剪
+                picCallBack.onPicSelected(p);
+            } else {
+                //完成图片多选
+                picCallBack.onPicSelected(p);
+            }
         }
     }
 
@@ -207,21 +249,39 @@ public class TackPhotoActivity extends Activity implements View.OnClickListener,
         } else {
             //点击一张照片
             String path = mAllPhotos.get(position - 1);
-            //单张并开启裁剪
+            ArrayList<String> pathList = new ArrayList<>();
+            pathList.add(path);
+            //照片预览
+            Intent intent = new Intent(this, PhotoShowActivity.class);
+            intent.putStringArrayListExtra("images", pathList); //预览一张
+            //预览所有
+            //intent.putExtra(EXTRA_STARTING_ALBUM_POSITION, position - 1);
+            //intent.putStringArrayListExtra("images", mAllPhotos);
+
+            //共享动画
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                startActivity(intent, ActivityOptionsCompat.makeSceneTransitionAnimation(this,
+                        view, path).toBundle());
+            } else {
+                startActivity(intent);
+            }
+
+           /* //单张并开启裁剪
             if (photoOptions.crop && photoOptions.takeNum < 2) {
-                CropActivity.startSelect(this, path, photoOptions, picCallBack);
+                CropActivity.startSelect(this, mPath, photoOptions, picCallBack);
                 finish();
             } else if (photoOptions.takeNum < 2) {
                 //单张不开启裁剪
-                picCallBack.onPicSelected(new String[]{path});
+                picCallBack.onPicSelected(new String[]{mPath});
                 finish();
             } else {
                 //多张
                 GVAdapter.ViewHolder tag = (GVAdapter.ViewHolder) view.getTag();
                 tag.mCbCheck.setChecked(!tag.mCbCheck.isChecked());
-            }
+            }*/
         }
     }
+
 
     /**
      * 开启相机拍照
@@ -252,16 +312,12 @@ public class TackPhotoActivity extends Activity implements View.OnClickListener,
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         Uri uri;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            //String provider = getPackageName() + ".take.PhotoPickerProvider";
-            //uri = FileProvider.getUriForFile(this, provider, out);
-            ContentValues contentValues = new ContentValues(1);
-            contentValues.put(MediaStore.Images.Media.DATA, out.getAbsolutePath());
-            uri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues);
+            String provider = getPackageName() + ".provider";
+            uri = FileProvider.getUriForFile(this, provider, out);
         } else {
             uri = Uri.fromFile(out);
         }
         intent.putExtra(MediaStore.EXTRA_OUTPUT, uri);
-
         startActivityForResult(intent, 0x03);
     }
 
@@ -293,6 +349,7 @@ public class TackPhotoActivity extends Activity implements View.OnClickListener,
             }
         }
     }
+
 
     private class GVAdapter extends BaseAdapter {
 
@@ -357,9 +414,15 @@ public class TackPhotoActivity extends Activity implements View.OnClickListener,
             public void setData(String path) {
                 mPath = path;
                 mCbCheck.setChecked(mSelectPhotos.contains(mPath)); //勾选框复用问题
-                mCbCheck.setVisibility(photoOptions.takeNum > 1 ? View.VISIBLE : View.GONE);
+                mCbCheck.setVisibility(View.VISIBLE);
+                //mCbCheck.setVisibility(photoOptions.takeNum > 1 ? View.VISIBLE : View.GONE);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    mIvPhoto.setTransitionName(path); //设置共享名称
+                    imageViews.put(path, mIvPhoto);
+                }
                 Glide.with(itemView.getContext())
                         .load(path)
+                        .crossFade()
                         .centerCrop()
                         .into(mIvPhoto);
             }
@@ -378,7 +441,7 @@ public class TackPhotoActivity extends Activity implements View.OnClickListener,
                     if (mSelectPhotos.size() < photoOptions.takeNum) {
                         mSelectPhotos.add(mPath);
                     } else {
-                        Toast.makeText(TackPhotoActivity.this,
+                        Toast.makeText(TakePhotoActivity.this,
                                 "您最多只能选择" + photoOptions.takeNum + "张照片！",
                                 Toast.LENGTH_SHORT).show();
                         mCbCheck.setChecked(false);
@@ -386,7 +449,11 @@ public class TackPhotoActivity extends Activity implements View.OnClickListener,
                 } else {
                     mSelectPhotos.remove(mPath);
                 }
-                mBtnComplete.setText("完成(" + mSelectPhotos.size() + "/" + photoOptions.takeNum + ")");
+                String text = "完成(" + mSelectPhotos.size() + "/" + photoOptions.takeNum + ")";
+                if (photoOptions.crop || photoOptions.takeNum < 2) {
+                    text = "完成";
+                }
+                mBtnComplete.setText(text);
             }
         }
     }

@@ -15,6 +15,7 @@ import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -28,8 +29,8 @@ public class PhotoFolderPopupWindow extends PopupWindow implements
     private ListView mFolderView;
     private Callback mCallback;
     private FolderAdapter mFolderAdapter;
-    private List<String> mFolders;
-    private HashMap<String, List<String>> mAllFile;
+    private ArrayList<String> mFolders;
+    private HashMap<String, ArrayList<String>> mAllFile;
 
     public PhotoFolderPopupWindow(Context context, int height, Callback callback) {
         super(LayoutInflater.from(context).inflate(R.layout.popup_window_folder, null),
@@ -57,7 +58,7 @@ public class PhotoFolderPopupWindow extends PopupWindow implements
 
     }
 
-    public void setAdapter(HashMap<String, List<String>> folders) {
+    public void setAdapter(HashMap<String, ArrayList<String>> folders) {
         mAllFile = folders;
         mFolders = PhotoProvider.getDirList(folders);
         mFolderAdapter = new FolderAdapter();
@@ -146,14 +147,14 @@ public class PhotoFolderPopupWindow extends PopupWindow implements
         }
 
         public void setData(String s) {
-            List<String> fnums = mAllFile.get(s);
+            List<String> fNum = mAllFile.get(s);
             if ("全部照片".equals(s)) {
-                fnums = PhotoProvider.getAllPhotos(mAllFile);
+                fNum = PhotoProvider.getAllPhotos(mAllFile);
             }
             tv_name.setText(s);
-            if (fnums != null && fnums.size() > 0) {
-                tv_size.setText(String.format("(%s)", fnums.size()));
-                String path = fnums.get(0);
+            if (fNum != null && fNum.size() > 0) {
+                tv_size.setText(String.format("(%s)", fNum.size()));
+                String path = fNum.get(0);
                 Glide.with(itemView.getContext()).load(path).centerCrop().into(iv_image);
             }
         }

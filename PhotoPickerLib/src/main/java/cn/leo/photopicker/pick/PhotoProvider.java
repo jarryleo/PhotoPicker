@@ -24,8 +24,8 @@ public class PhotoProvider {
      * @param context
      * @return
      */
-    public static HashMap<String, List<String>> getDiskPhotos(Activity context) {
-        HashMap<String, List<String>> allPic = new LinkedHashMap<>();
+    public static HashMap<String, ArrayList<String>> getDiskPhotos(Activity context) {
+        HashMap<String, ArrayList<String>> allPic = new LinkedHashMap<>();
         Uri mImageUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
         ContentResolver mContentResolver = context.getContentResolver();
         Cursor mCursor = mContentResolver.query(mImageUri, null, MediaStore.Images.Media.MIME_TYPE
@@ -59,9 +59,9 @@ public class PhotoProvider {
      * @param photos
      * @return
      */
-    public static List<String> getDirList(HashMap<String, List<String>> photos) {
+    public static ArrayList<String> getDirList(HashMap<String, ArrayList<String>> photos) {
         if (photos == null) return null;
-        List<String> dirs = new ArrayList<>();
+        ArrayList<String> dirs = new ArrayList<>();
         Set<String> set = photos.keySet();
         dirs.add("全部照片");
         for (String dir : set
@@ -77,8 +77,8 @@ public class PhotoProvider {
      * @param photos
      * @return
      */
-    public static List<String> getAllPhotos(HashMap<String, List<String>> photos) {
-        List<String> allPhotos = new ArrayList<>();
+    public static ArrayList<String> getAllPhotos(HashMap<String, ArrayList<String>> photos) {
+        ArrayList<String> allPhotos = new ArrayList<>();
         Set<String> set = photos.keySet();
         for (String dir : set
                 ) {

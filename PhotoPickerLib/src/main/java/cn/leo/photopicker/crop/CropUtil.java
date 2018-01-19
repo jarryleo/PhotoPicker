@@ -25,9 +25,24 @@ public class CropUtil {
         return true;
     }
 
+    /**
+     * 获取照片存储路径
+     *
+     * @return
+     */
     public static String getCameraPath() {
         return Environment.getExternalStorageDirectory().getAbsolutePath() + "/DCIM/Camera/";// filePath:/sdcard/
     }
+
+    /**
+     * 获取缓存路径
+     *
+     * @return
+     */
+    public static String getCachePath() {
+        return Environment.getExternalStorageDirectory().getAbsolutePath() + "/Cache/";
+    }
+
 
     public static String getSaveImageFullName() {
         return "IMG_" + new SimpleDateFormat("yyyyMMdd_HHmmss")

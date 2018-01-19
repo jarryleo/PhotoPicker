@@ -75,7 +75,7 @@ public class CropActivity extends Activity implements View.OnClickListener {
         if (v == btn1) {
             Bitmap bitmap = mGl.cropBitmap();
             //mIv.setImageBitmap(bitmap);
-            String path = CropUtil.getCameraPath() + CropUtil.getSaveImageFullName();
+            String path = CropUtil.getCachePath() + CropUtil.getSaveImageFullName();
             FileOutputStream fos = null;
             try {
                 fos = new FileOutputStream(new File(path));

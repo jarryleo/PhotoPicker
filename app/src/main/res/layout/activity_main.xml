@@ -47,12 +47,12 @@
         android:layout_height="150dp"
         android:scrollbarAlwaysDrawHorizontalTrack="true">
 
-        <LinearLayout
+        <cn.leo.photopickerdemo.ImageShow
             android:id="@+id/ll_container"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
             android:orientation="horizontal">
 
-        </LinearLayout>
+        </cn.leo.photopickerdemo.ImageShow>
     </HorizontalScrollView>
 </LinearLayout>

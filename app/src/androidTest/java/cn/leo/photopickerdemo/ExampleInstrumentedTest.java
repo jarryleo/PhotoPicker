@@ -1,4 +1,4 @@
-package cn.leo.photopickerdemo2;
+package cn.leo.photopickerdemo;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;

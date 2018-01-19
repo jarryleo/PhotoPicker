@@ -3,7 +3,7 @@ package cn.leo.photopicker.pick;
 import android.app.Activity;
 import android.support.annotation.NonNull;
 
-import cn.leo.photopicker.activity.TackPhotoActivity;
+import cn.leo.photopicker.activity.TakePhotoActivity;
 
 /**
  * Created by JarryLeo on 2017/5/20.
@@ -25,7 +25,7 @@ public class PhotoPicker {
         options.takeNum = picNum;
         options.cropWidth = cropWidth;
         options.cropHeight = cropHeight;
-        TackPhotoActivity.startSelect(context, options, callBack);
+        TakePhotoActivity.startSelect(context, options, callBack);
 
     }
 

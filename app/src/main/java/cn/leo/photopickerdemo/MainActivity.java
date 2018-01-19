@@ -1,11 +1,11 @@
-package cn.leo.photopickerdemo2;
+package cn.leo.photopickerdemo;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.view.Window;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
@@ -18,7 +18,7 @@ import cn.leo.photopicker.pick.PhotoPicker;
 public class MainActivity extends AppCompatActivity {
 
     private ImageView mImageView;
-    private LinearLayout mLlContainer;
+    private ImageShow mLlContainer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,7 +26,13 @@ public class MainActivity extends AppCompatActivity {
         getWindow().requestFeature(Window.FEATURE_NO_TITLE);
         setContentView(cn.leo.photopicker.R.layout.activity_main);
         mImageView = (ImageView) findViewById(cn.leo.photopicker.R.id.iv_img);
-        mLlContainer = (LinearLayout) findViewById(cn.leo.photopicker.R.id.ll_container);
+        mLlContainer = (ImageShow) findViewById(cn.leo.photopicker.R.id.ll_container);
+        mLlContainer.setOnImageClickListener(new ImageShow.OnImageClickListener() {
+            @Override
+            public void onClick(String tag, ImageView imageView) {
+                Toast.makeText(MainActivity.this, tag, Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     public void selectSinglePhotoCrop(View v) {
@@ -63,13 +69,12 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onPicSelected(String[] path) {
-                mLlContainer.removeAllViews();
+                //mLlContainer.removeAllViews();
+                mLlContainer.removeAllImageView();
                 for (int i = 0; i < path.length; i++) {
                     ImageView iv = new ImageView(MainActivity.this);
-
-
-                    mLlContainer.addView(iv);
-                    LinearLayout.LayoutParams mParams = (LinearLayout.LayoutParams) iv.getLayoutParams();
+                    mLlContainer.addImageView(iv, "image" + i);
+                    RelativeLayout.LayoutParams mParams = (RelativeLayout.LayoutParams) iv.getLayoutParams();
                     if (i > 0) {
                         mParams.leftMargin = 5;
                     }

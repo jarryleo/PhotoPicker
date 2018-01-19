@@ -1,4 +1,4 @@
-package cn.leo.photopickerdemo2;
+package cn.leo.photopickerdemo;
 
 import org.junit.Test;
 
