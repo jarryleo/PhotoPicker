@@ -67,31 +67,29 @@ public class MainActivity extends AppCompatActivity {
         //选择多张图片
         PhotoPicker.selectPhoto(this)
                 .multi(3)
-                .compress(100,100)
+                .compress(1080, 1920)
                 .take(new PhotoPicker.PhotoCallBack() {
 
-            @Override
-            public void onPicSelected(String[] path) {
-                //mLlContainer.removeAllViews();
-                mLlContainer.removeAllImageView();
-                for (int i = 0; i < path.length; i++) {
-                    ImageView iv = new ImageView(MainActivity.this);
-                    mLlContainer.addImageView(iv, "image" + i);
-                    RelativeLayout.LayoutParams mParams = (RelativeLayout.LayoutParams) iv.getLayoutParams();
-                    if (i > 0) {
-                        mParams.leftMargin = 5;
-                    }
-                    mParams.width = CropUtil.dip2Px(MainActivity.this, 200);
-                    mParams.height = CropUtil.dip2Px(MainActivity.this, 150);
-                    iv.setLayoutParams(mParams);
-                    Glide.with(MainActivity.this)
-                            .load(path[i])
-                            .centerCrop()
-                            .into(iv);
-                }
+                    @Override
+                    public void onPicSelected(String[] path) {
+                        //mLlContainer.removeAllViews();
+                        mLlContainer.removeAllImageView();
+                        for (int i = 0; i < path.length; i++) {
+                            ImageView iv = new ImageView(MainActivity.this);
+                            mLlContainer.addImageView(iv, "image" + i);
+                            RelativeLayout.LayoutParams mParams = (RelativeLayout.LayoutParams) iv.getLayoutParams();
+                            if (i > 0) {
+                                mParams.leftMargin = 5;
+                            }
+                            iv.setLayoutParams(mParams);
+                            Glide.with(MainActivity.this)
+                                    .load(path[i])
+                                    .centerCrop()
+                                    .into(iv);
+                        }
 
-            }
-        });
+                    }
+                });
     }
 
 

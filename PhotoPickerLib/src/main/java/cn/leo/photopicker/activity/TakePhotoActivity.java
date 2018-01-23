@@ -4,6 +4,7 @@ import android.Manifest;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.net.Uri;
@@ -34,6 +35,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.animation.GlideAnimation;
+import com.bumptech.glide.request.target.SimpleTarget;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -228,7 +231,10 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
             } else {
                 //完成选择
                 if (mSelectPhotos.size() > 0) {
-                    if (photoOptions.compressWidth > 0 && photoOptions.compressHeight > 0) {
+                    if (photoOptions.type == PhotoOptions.TYPE_VIDEO) {
+                        //如果是视频，需要创建缩略图
+                        getThumb(p);
+                    } else if (photoOptions.compressWidth > 0 && photoOptions.compressHeight > 0) {
                         //需要压缩
                         compress();
                     } else {
@@ -238,6 +244,28 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
                 }
             }
         }
+    }
+
+    //提取视频缩略图
+    private void getThumb(final String[] videoPaths) {
+        if (mProgressDialog == null) {
+            mProgressDialog = new ProgressDialog(this);
+            mProgressDialog.setTitle("视频处理中，请稍候...");
+        }
+        mProgressDialog.show();
+        for (int i = 0; i < mSelectPhotos.size(); i++) {
+            final String path = mSelectPhotos.get(i);
+            Glide.with(TakePhotoActivity.this)
+                    .load(path)
+                    .asBitmap()
+                    .into(new SimpleTarget<Bitmap>() {
+                        @Override
+                        public void onResourceReady(Bitmap bitmap, GlideAnimation<? super Bitmap> glideAnimation) {
+                            ImageCompressUtil.compressThumb(bitmap, ImageCompressUtil.changeFileType(path));
+                        }
+                    });
+        }
+        mHandler.obtainMessage(0, videoPaths).sendToTarget();
     }
 
     Handler mHandler = new Handler(Looper.getMainLooper(), new Handler.Callback() {
@@ -252,10 +280,12 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
     });
     ProgressDialog mProgressDialog;
 
+    //压缩图片
     private void compress() {
         if (mProgressDialog == null) {
             mProgressDialog = new ProgressDialog(this);
-            mProgressDialog.setTitle("图片压缩中，请稍候...");
+            mProgressDialog.setMessage("图片压缩中，请稍候...");
+            mProgressDialog.setCancelable(false);
         }
         mProgressDialog.show();
         new Thread() {
@@ -264,9 +294,19 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
                 String[] compressPaths = new String[mSelectPhotos.size()];
                 for (int i = 0; i < mSelectPhotos.size(); i++) {
                     String selectPhoto = mSelectPhotos.get(i);
-                    String descPath = CropUtil.getCachePath() + new File(selectPhoto).getName();
-                    ImageCompressUtil.compressPx(selectPhoto, descPath, photoOptions);
-                    compressPaths[i] = descPath;
+                    File file = new File(selectPhoto);
+                    if (photoOptions.size > 0 && file.length() < photoOptions.size) {
+                        compressPaths[i] = selectPhoto;
+                    } else {
+                        String descPath = CropUtil.getCachePath() + file.getName();
+                        long compressPx = ImageCompressUtil.compressPx(selectPhoto, descPath, photoOptions);
+                        int quality = 90;
+                        while (photoOptions.size > 0 && compressPx > photoOptions.size && quality > 10) {
+                            compressPx = ImageCompressUtil.compressPx(descPath, photoOptions, quality);
+                            quality -= 10;
+                        }
+                        compressPaths[i] = descPath;
+                    }
                 }
                 mHandler.obtainMessage(0, compressPaths).sendToTarget();
             }
@@ -563,6 +603,7 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
                                     "你选择的视频时长超出限制",
                                     Toast.LENGTH_SHORT).show();
                             mCbCheck.setChecked(false);
+                            return;
                         }
                         if (photoOptions.size > 0 &&
                                 videoInfo.size > photoOptions.size) {
@@ -570,6 +611,7 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
                                     "你选择的视频大小超出限制",
                                     Toast.LENGTH_SHORT).show();
                             mCbCheck.setChecked(false);
+                            return;
                         }
                     }
                     if (mSelectPhotos.size() < photoOptions.takeNum) {
@@ -585,6 +627,7 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
                                         s,
                                 Toast.LENGTH_SHORT).show();
                         mCbCheck.setChecked(false);
+                        return;
                     }
                 } else {
                     mSelectPhotos.remove(mPath);
