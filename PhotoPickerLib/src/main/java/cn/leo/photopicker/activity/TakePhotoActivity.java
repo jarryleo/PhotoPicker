@@ -250,7 +250,8 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
     private void getThumb(final String[] videoPaths) {
         if (mProgressDialog == null) {
             mProgressDialog = new ProgressDialog(this);
-            mProgressDialog.setTitle("视频处理中，请稍候...");
+            mProgressDialog.setMessage("视频处理中，请稍候...");
+            mProgressDialog.setCancelable(false);
         }
         mProgressDialog.show();
         for (int i = 0; i < mSelectPhotos.size(); i++) {
@@ -452,6 +453,14 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
         }
         if (photoOptions.type == PhotoOptions.TYPE_VIDEO) {
             intent.setAction(MediaStore.ACTION_VIDEO_CAPTURE);
+            if (photoOptions.duration > 0) {
+                //限制时长
+                intent.putExtra(MediaStore.EXTRA_DURATION_LIMIT, photoOptions.duration / 1000);
+            }
+            if (photoOptions.size > 0) {
+                //限制大小
+                intent.putExtra(MediaStore.EXTRA_SIZE_LIMIT, photoOptions.size);
+            }
         } else {
             intent.setAction(MediaStore.ACTION_IMAGE_CAPTURE);
         }
@@ -578,6 +587,11 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
                     mTvDuration.setVisibility(View.VISIBLE);
                     //读取时长和大小
                     mTvDuration.setText(mVideoUtil.getTime(path));
+                    if (mVideoUtil.getDuration(path) > photoOptions.duration + 500) {
+                        mTvDuration.setTextColor(Color.RED);
+                    } else {
+                        mTvDuration.setTextColor(Color.WHITE);
+                    }
                 } else {
                     mTvDuration.setVisibility(View.GONE);
                 }

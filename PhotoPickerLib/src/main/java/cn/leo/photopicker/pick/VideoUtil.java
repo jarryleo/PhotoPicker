@@ -30,6 +30,14 @@ public class VideoUtil implements LifecycleObserver {
         return "";
     }
 
+    public int getDuration(String path) {
+        VideoInfo videoInfo = videoInfoHashMap.get(path);
+        if (videoInfo != null) {
+            return videoInfo.duration;
+        }
+        return 0;
+    }
+
     public VideoInfo getVideoInfo(String path) {
         return videoInfoHashMap.get(path);
     }
