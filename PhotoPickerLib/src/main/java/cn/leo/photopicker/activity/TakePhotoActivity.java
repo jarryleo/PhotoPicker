@@ -79,6 +79,10 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
     protected void onCreate(Bundle savedInstanceState) {
         initStatusBar();
         super.onCreate(savedInstanceState);
+        //getWindow().requestFeature(Window.FEATURE_NO_TITLE);
+        /*if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            getWindow().requestFeature(Window.FEATURE_CONTENT_TRANSITIONS);
+        }*/
         setContentView(R.layout.activity_tack_photo);
         initView();
         initEvent();
@@ -105,23 +109,44 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
      * 检查权限
      */
     private void initPermission() {
-        boolean SDPermission = PermissionUtil.checkPremission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        boolean SDPermission = PermissionUtil.checkPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
         if (!SDPermission) {
-            PermissionUtil.requestPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE);
+            PermissionUtil.requestPermission(this,
+                    Manifest.permission.READ_EXTERNAL_STORAGE, "需要访问相册权限,点击确定前往设置", 100);
         } else {
             initData();
         }
     }
 
+    private void initCameraPermission() {
+        boolean cameraPermission = PermissionUtil.checkPermission(this, Manifest.permission.CAMERA);
+        if (!cameraPermission) {
+            PermissionUtil.requestPermission(this,
+                    Manifest.permission.CAMERA, "需要访问相机权限,点击确定前往设置", 200);
+        } else {
+            toOpenCamera();
+        }
+    }
+
+
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         boolean result = PermissionUtil.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (!result) {
-            Toast.makeText(this, "缺少权限，图片加载失败！", Toast.LENGTH_SHORT).show();
-            finish();
-        } else {
-            initData();
+        if (requestCode == 100) {
+            if (!result) {
+                Toast.makeText(this, "缺少权限，图片加载失败！", Toast.LENGTH_SHORT).show();
+                finish();
+            } else {
+                initData();
+            }
+        } else if (requestCode == 200) {
+            if (!result) {
+                Toast.makeText(this, "缺少权限，打开相机失败！", Toast.LENGTH_SHORT).show();
+            } else {
+                toOpenCamera();
+            }
         }
+
     }
 
     /**
@@ -150,8 +175,10 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
 
     @Override
     protected void onDestroy() {
+        if (mMediaStoreContentObserver != null) {
+            getContentResolver().unregisterContentObserver(mMediaStoreContentObserver);
+        }
         super.onDestroy();
-        getContentResolver().unregisterContentObserver(mMediaStoreContentObserver);
     }
 
     public void refreshData() {
@@ -350,7 +377,7 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         if (position == 0) {
             //打开相机拍照，并返回相片
-            toOpenCamera();
+            initCameraPermission();
 
         } else {
             //视频预览
@@ -610,7 +637,7 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
                     if (photoOptions.type == PhotoOptions.TYPE_VIDEO) {
                         VideoUtil.VideoInfo videoInfo = mVideoUtil.getVideoInfo(mPath);
                         if (photoOptions.duration > 0 &&
-                                videoInfo.duration > photoOptions.duration) {
+                                videoInfo.duration > photoOptions.duration + 500) {
                             Toast.makeText(TakePhotoActivity.this,
                                     "你选择的视频时长超出限制",
                                     Toast.LENGTH_SHORT).show();

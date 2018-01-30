@@ -19,6 +19,7 @@ import android.support.v4.content.ContextCompat;
 
 public class PermissionUtil {
     private static final int REQUEST_CODE = 100;
+    private static int mRequestCode = REQUEST_CODE;
 
     /**
      * 检查权限
@@ -27,7 +28,7 @@ public class PermissionUtil {
      * @param permission Manifest.permission.ACCESS_COARSE_LOCATION
      * @return
      */
-    public static boolean checkPremission(Context context, String permission) {
+    public static boolean checkPermission(Context context, String permission) {
         //检查权限
         int checkSelfPermission = ContextCompat.checkSelfPermission(context, permission);
         return checkSelfPermission == PackageManager.PERMISSION_GRANTED;
@@ -39,12 +40,17 @@ public class PermissionUtil {
      * @param activity
      * @param permissions
      */
-    public static void requestPermissions(Activity activity, String[] permissions) {
+    public static void requestPermissions(Activity activity, String... permissions) {
         if (Build.VERSION.SDK_INT < 23) {
             return;
         }
         //申请多个权限
         ActivityCompat.requestPermissions(activity, permissions, REQUEST_CODE);
+    }
+
+    public static void requestPermission(Activity activity, String permission, String msg, int requestCode) {
+        mRequestCode = requestCode;
+        requestPermission(activity, permission, msg);
     }
 
     /**
@@ -53,19 +59,19 @@ public class PermissionUtil {
      * @param activity
      * @param permission
      */
-    public static void requestPermission(Activity activity, String permission) {
-        if (Build.VERSION.SDK_INT < 23 || checkPremission(activity, permission)) {
+    public static void requestPermission(Activity activity, String permission, String msg) {
+        if (Build.VERSION.SDK_INT < 23 || checkPermission(activity, permission)) {
             return;
         }
         //如果用户点了不提示，我们主动提示用户
         if (ActivityCompat.shouldShowRequestPermissionRationale(activity, permission)) {
-            openSettingActivity(activity, "使用此功能需要开启权限:" + permission);
+            openSettingActivity(activity, msg);
         } else {
             //申请单个权限
             try {
-                ActivityCompat.requestPermissions(activity, new String[]{permission}, REQUEST_CODE);
+                ActivityCompat.requestPermissions(activity, new String[]{permission}, mRequestCode);
             } catch (Exception e) {
-                openSettingActivity(activity, "使用此功能需要开启权限:" + permission);
+                openSettingActivity(activity, msg);
             }
         }
     }
@@ -115,14 +121,12 @@ public class PermissionUtil {
      * @return
      */
     public static boolean onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        switch (requestCode) {
-            case REQUEST_CODE:
-                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    return true;
-                }
-                break;
+        for (int i = 0; i < grantResults.length; i++) {
+            if (grantResults[0] == PackageManager.PERMISSION_DENIED) {
+                return false;
+            }
         }
-        return false;
+        return true;
     }
 
 
