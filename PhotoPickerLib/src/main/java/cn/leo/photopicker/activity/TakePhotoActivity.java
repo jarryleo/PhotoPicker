@@ -83,6 +83,12 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
         /*if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             getWindow().requestFeature(Window.FEATURE_CONTENT_TRANSITIONS);
         }*/
+        if (savedInstanceState != null) {
+            PhotoOptions options = savedInstanceState.getParcelable("options");
+            if (options != null) {
+                photoOptions = options;
+            }
+        }
         setContentView(R.layout.activity_tack_photo);
         initView();
         initEvent();
@@ -677,6 +683,31 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
                 }
                 mBtnComplete.setText(text);
             }
+        }
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putParcelable("options", photoOptions);
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        if (savedInstanceState != null) {
+            PhotoOptions options = savedInstanceState.getParcelable("options");
+            if (options != null) {
+                photoOptions = options;
+            }
+        }
+    }
+
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        if (mAllPhotos == null || mAllPhotos.size() == 0) {
+            initPermission();
         }
     }
 }
