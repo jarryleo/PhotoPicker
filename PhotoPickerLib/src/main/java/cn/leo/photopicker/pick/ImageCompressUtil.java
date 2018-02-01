@@ -2,6 +2,7 @@ package cn.leo.photopicker.pick;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.support.annotation.NonNull;
 
 import java.io.File;
@@ -34,9 +35,12 @@ public class ImageCompressUtil {
             e.printStackTrace();
         } finally {
             try {
-                if (out != null)
+                if (out != null) {
                     out.close();
-                bitmap.recycle();
+                }
+                if (!bitmap.isRecycled()) {
+                    bitmap.recycle();
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -62,9 +66,12 @@ public class ImageCompressUtil {
             e.printStackTrace();
         } finally {
             try {
-                if (out != null)
+                if (out != null) {
                     out.close();
-                bitmap.recycle();
+                }
+                if (!bitmap.isRecycled()) {
+                    bitmap.recycle();
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -96,6 +103,7 @@ public class ImageCompressUtil {
         be = bWidth < bHeight ? bWidth : bHeight; //设定最小倍率为压缩倍率
         be = be < 1 ? 1 : be;//小于1则等于1
         options.inSampleSize = be;
+        options.inPreferredConfig = Bitmap.Config.RGB_565;
         return options;
     }
 
@@ -106,17 +114,23 @@ public class ImageCompressUtil {
      * @param savePath
      */
     public static void compressThumb(Bitmap bitmap, String savePath) {
-        BitmapFactory.Options options = getOptions(bitmap);
+        Bitmap thumb = getBitmap(bitmap);
         OutputStream out = null;
         try {
             out = new FileOutputStream(savePath);
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
+            thumb.compress(Bitmap.CompressFormat.JPEG, 100, out);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } finally {
             try {
                 if (out != null)
                     out.close();
+                if (!thumb.isRecycled()) {
+                    thumb.recycle();
+                }
+                if (!bitmap.isRecycled()) {
+                    bitmap.recycle();
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -125,20 +139,29 @@ public class ImageCompressUtil {
 
     }
 
-    private static BitmapFactory.Options getOptions(Bitmap bitmap) {
-        BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inJustDecodeBounds = false;
-        int bWidth = options.outWidth;
-        int bHeight = options.outHeight;
-        int toWidth = 320; //设定图片压缩目标宽高像素
-        int toHeight = 240;
-        int be = 1; //默认不变
-        bWidth /= toWidth; //宽度大于设定值倍率
-        bHeight /= toHeight; //高度大于设定值倍率
-        be = bWidth < bHeight ? bWidth : bHeight; //设定最小倍率为压缩倍率
-        be = be < 1 ? 1 : be;//小于1则等于1
-        options.inSampleSize = be;
-        return options;
+    private static Bitmap getBitmap(Bitmap bitmap) {
+        //原图宽高
+        int width = bitmap.getWidth();
+        int height = bitmap.getHeight();
+        //设定图片压缩目标宽高像素
+        float toWidth = 320f;
+        float toHeight = 240f;
+        //求得长宽压缩比
+        float s1 = toWidth / width;
+        float s2 = toHeight / height;
+        //整体压缩按最大压缩比来
+        float scale = s1;
+        if (s1 > s2) {
+            scale = s2;
+        }
+        if (scale > 1) {
+            return bitmap;
+        }
+        // 取得想要缩放的matrix参数
+        Matrix matrix = new Matrix();
+        matrix.postScale(scale, scale);
+        // 得到新的bitmap
+        return Bitmap.createBitmap(bitmap, 0, 0, width, height, matrix, true);
     }
 
     /**

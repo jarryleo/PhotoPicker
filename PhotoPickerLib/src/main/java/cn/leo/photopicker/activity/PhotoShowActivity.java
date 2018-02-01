@@ -6,8 +6,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.view.ViewPager;
-import android.view.Window;
 import android.view.WindowManager;
+import android.widget.CheckBox;
 import android.widget.ImageView;
 
 import com.bumptech.glide.Glide;
@@ -24,6 +24,8 @@ public class PhotoShowActivity extends Activity {
     private CarouselView mCarouselView;
     private int mCurrentPosition;
     private int mStartingPosition;
+    private CheckBox mCheckBox;
+    private ArrayList<String> mImages;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,12 +49,17 @@ public class PhotoShowActivity extends Activity {
 
     private void initView() {
         Intent intent = getIntent();
-        final ArrayList<String> images = intent.getStringArrayListExtra("images");
+        //图片是否选中
+        boolean check = intent.getBooleanExtra("check", false);
+        mCheckBox = (CheckBox) findViewById(R.id.cb_check);
+        mCheckBox.setChecked(check);
+
+        mImages = intent.getStringArrayListExtra("images");
         //int index = intent.getIntExtra("index", 0);
         mCarouselView = (CarouselView) findViewById(R.id.carouselView);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && images != null) {
-            mCarouselView.setTransitionName(images.get(mCurrentPosition));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && mImages != null) {
+            mCarouselView.setTransitionName(mImages.get(mCurrentPosition));
         }
         mCarouselView.initImageLoader(new CarouselView.ImageLoader() {
             @Override
@@ -67,7 +74,7 @@ public class PhotoShowActivity extends Activity {
             }
         });
 
-        mCarouselView.setImageList(images, images.size() > 1);
+        mCarouselView.setImageList(mImages, mImages.size() > 1);
         mCarouselView.setCurrentItem(mCurrentPosition);
         mCarouselView.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
             @Override
@@ -88,6 +95,8 @@ public class PhotoShowActivity extends Activity {
         Intent data = new Intent();
         data.putExtra(EXTRA_STARTING_ALBUM_POSITION, mStartingPosition);
         data.putExtra(EXTRA_CURRENT_ALBUM_POSITION, mCurrentPosition);
+        data.putExtra("path", mImages.get(mCurrentPosition));
+        data.putExtra("check", mCheckBox.isChecked());
         setResult(RESULT_OK, data);
         super.finishAfterTransition();
     }

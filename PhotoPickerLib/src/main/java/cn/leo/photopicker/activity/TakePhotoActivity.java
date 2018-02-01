@@ -1,6 +1,7 @@
 package cn.leo.photopicker.activity;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
@@ -15,6 +16,7 @@ import android.os.Looper;
 import android.os.Message;
 import android.provider.MediaStore;
 import android.support.v4.app.ActivityOptionsCompat;
+import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
@@ -54,7 +56,7 @@ import cn.leo.photopicker.pick.PhotoPicker;
 import cn.leo.photopicker.pick.PhotoProvider;
 import cn.leo.photopicker.pick.VideoUtil;
 
-public class TakePhotoActivity extends AppCompatActivity implements View.OnClickListener, AdapterView.OnItemClickListener {
+public class TakePhotoActivity extends FragmentActivity implements View.OnClickListener, AdapterView.OnItemClickListener {
     private static final String EXTRA_STARTING_ALBUM_POSITION = "extra_starting_item_position";
     private static final String EXTRA_CURRENT_ALBUM_POSITION = "extra_current_item_position";
     private ImageView mIvBack;
@@ -379,6 +381,7 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
     }
 
     //图片点击事件
+    @SuppressLint("RestrictedApi")
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         if (position == 0) {
@@ -419,13 +422,14 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
             //预览所有
             //intent.putExtra(EXTRA_STARTING_ALBUM_POSITION, position - 1);
             //intent.putStringArrayListExtra("images", mAllPhotos);
-
+            //带过去选择状态
+            intent.putExtra("check", mSelectPhotos.contains(path));
             //共享动画
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                startActivity(intent, ActivityOptionsCompat.makeSceneTransitionAnimation(this,
+                startActivityForResult(intent, 0x05, ActivityOptionsCompat.makeSceneTransitionAnimation(this,
                         view, path).toBundle());
             } else {
-                startActivity(intent);
+                startActivityForResult(intent, 0x05);
             }
 
            /* //单张并开启裁剪
@@ -443,7 +447,6 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
             }*/
         }
     }
-
 
     /**
      * 开启相机拍照
@@ -533,6 +536,18 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
                     mOption.getCallback().doSelected(new String[]{data.getStringExtra("crop_path")});
                     finish();
                     break;*/
+                case 0x05:
+                    String selectPath = data.getStringExtra("path");
+                    boolean check = data.getBooleanExtra("check", false);
+                    if (!TextUtils.isEmpty(selectPath)) {
+                        if (check) {
+                            mSelectPhotos.add(selectPath);
+                        } else {
+                            mSelectPhotos.remove(selectPath);
+                        }
+                        mAdapter.notifyDataSetChanged();
+                    }
+                    break;
             }
         }
     }

@@ -12,4 +12,19 @@
         android:id="@+id/carouselView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
+
+    <CheckBox
+        android:id="@+id/cb_check"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:layout_margin="8dp"
+        android:shadowColor="#ff000000"
+        android:shadowDx="1"
+        android:shadowDy="1"
+        android:shadowRadius="1"
+        android:text="选择"
+        android:textColor="@android:color/white"
+        android:textSize="18dp"/>
 </RelativeLayout>
