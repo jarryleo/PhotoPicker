@@ -1,8 +1,6 @@
 package cn.leo.photopicker.pick;
 
-import android.app.Activity;
-
-import cn.leo.photopicker.activity.TakePhotoActivity;
+import android.support.v4.app.FragmentActivity;
 
 /**
  * Created by JarryLeo on 2017/5/20.
@@ -10,11 +8,11 @@ import cn.leo.photopicker.activity.TakePhotoActivity;
 
 public class PhotoPicker {
 
-    public static SelectPhoto selectPhoto(Activity context) {
+    public static SelectPhoto selectPhoto(FragmentActivity context) {
         return new SelectPhoto(context);
     }
 
-    public static SelectVideo selectVideo(Activity context) {
+    public static SelectVideo selectVideo(FragmentActivity context) {
         return new SelectVideo(context);
     }
 
@@ -24,10 +22,10 @@ public class PhotoPicker {
 
 
     public static class SelectPhoto {
-        private Activity mActivity;
+        private FragmentActivity mActivity;
         private PhotoOptions options = new PhotoOptions();
 
-        private SelectPhoto(Activity activity) {
+        private SelectPhoto(FragmentActivity activity) {
             mActivity = activity;
 
         }
@@ -56,15 +54,16 @@ public class PhotoPicker {
         }
 
         public void take(PhotoCallBack callBack) {
-            TakePhotoActivity.startSelect(mActivity, options, callBack);
+            LifeCycleUtil.setLifeCycleListener(mActivity, options, callBack);
+            //TakePhotoActivity.startSelect(mActivity, options, callBack);
         }
     }
 
     public static class SelectVideo {
-        private Activity mActivity;
+        private FragmentActivity mActivity;
         private PhotoOptions options = new PhotoOptions();
 
-        private SelectVideo(Activity activity) {
+        private SelectVideo(FragmentActivity activity) {
             mActivity = activity;
             options.type = PhotoOptions.TYPE_VIDEO;
         }
@@ -85,7 +84,8 @@ public class PhotoPicker {
         }
 
         public void take(PhotoCallBack callBack) {
-            TakePhotoActivity.startSelect(mActivity, options, callBack);
+            LifeCycleUtil.setLifeCycleListener(mActivity, options, callBack);
+            //TakePhotoActivity.startSelect(mActivity, options, callBack);
         }
     }
 }

@@ -15,6 +15,7 @@ import android.os.Looper;
 import android.os.Message;
 import android.provider.MediaStore;
 import android.support.v4.app.ActivityOptionsCompat;
+import android.support.v4.app.Fragment;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
@@ -45,6 +46,7 @@ import java.util.HashMap;
 
 import cn.leo.photopicker.R;
 import cn.leo.photopicker.crop.CropUtil;
+import cn.leo.photopicker.pick.FragmentCallback;
 import cn.leo.photopicker.pick.ImageCompressUtil;
 import cn.leo.photopicker.pick.MediaStoreContentObserver;
 import cn.leo.photopicker.pick.PermissionUtil;
@@ -168,6 +170,12 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
         context.startActivity(new Intent(context, TakePhotoActivity.class));
     }
 
+    public static void startSelect(Fragment context, PhotoOptions options) {
+        photoOptions = options;
+        Intent intent = new Intent(context.getActivity(), TakePhotoActivity.class);
+        context.startActivityForResult(intent, FragmentCallback.REQUEST_CODE);
+    }
+
     private void initData() {
         mVideoUtil = new VideoUtil(this);
         mAdapter = new GVAdapter();
@@ -225,11 +233,13 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
         mLlTitleContainer = (LinearLayout) findViewById(R.id.photo_picker_ll_titlecontainer);
         mBtnComplete = (TextView) findViewById(R.id.tv_btn_complete);
         //mBtnComplete.setVisibility(photoOptions.takeNum > 1 ? View.VISIBLE : View.GONE);
-        String text = "完成(" + mSelectPhotos.size() + "/" + photoOptions.takeNum + ")";
-        if (photoOptions.crop || photoOptions.takeNum < 2) {
-            text = "完成";
+        if (photoOptions != null) {
+            String text = "完成(" + mSelectPhotos.size() + "/" + photoOptions.takeNum + ")";
+            if (photoOptions.crop || photoOptions.takeNum < 2) {
+                text = "完成";
+            }
+            mBtnComplete.setText(text);
         }
-        mBtnComplete.setText(text);
     }
 
     private void initEvent() {
@@ -307,7 +317,13 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
         @Override
         public boolean handleMessage(Message msg) {
             String[] compressPaths = (String[]) msg.obj;
-            picCallBack.onPicSelected(compressPaths);
+            if (picCallBack == null) {
+                Intent data = new Intent();
+                data.putExtra("imgList", compressPaths);
+                setResult(RESULT_OK, data);
+            } else {
+                picCallBack.onPicSelected(compressPaths);
+            }
             mProgressDialog.dismiss();
             finish();
             return true;
