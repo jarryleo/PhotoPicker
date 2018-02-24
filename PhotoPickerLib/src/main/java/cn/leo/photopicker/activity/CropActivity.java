@@ -26,7 +26,7 @@ import cn.leo.photopicker.pick.PhotoPicker;
 public class CropActivity extends Activity implements View.OnClickListener {
 
     private static PhotoOptions photoOptions;
-    private static PhotoPicker.PhotoCallBack picCallBack;
+    //private static PhotoPicker.PhotoCallBack picCallBack;
     private CropLayout mGl;
     private Button btn1;
     private Button btn2;
@@ -50,12 +50,12 @@ public class CropActivity extends Activity implements View.OnClickListener {
      * @param options
      */
     public static void startSelect(Activity context, String url,
-                                   PhotoOptions options,
-                                   PhotoPicker.PhotoCallBack callBack) {
+                                   PhotoOptions options
+                                   /*PhotoPicker.PhotoCallBack callBack*/) {
         mUrl = url;
         photoOptions = options;
-        picCallBack = callBack;
-        context.startActivity(new Intent(context, CropActivity.class));
+        //picCallBack = callBack;
+        context.startActivityForResult(new Intent(context, CropActivity.class), 0x04);
     }
 
     private void initView() {
@@ -80,7 +80,11 @@ public class CropActivity extends Activity implements View.OnClickListener {
             try {
                 fos = new FileOutputStream(new File(path));
                 bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos);
-                picCallBack.onPicSelected(new String[]{path});
+                Intent data = new Intent();
+                data.putExtra("path", path);
+                setResult(RESULT_OK, data);
+                finish();
+                //picCallBack.onPicSelected(new String[]{path});
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             } finally {

@@ -266,9 +266,9 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
             //单选并裁剪
             if (photoOptions.crop && photoOptions.takeNum < 2) {
                 if (p.length == 1) {
-                    CropActivity.startSelect(this, p[0], photoOptions, picCallBack);
+                    CropActivity.startSelect(this, p[0], photoOptions/*, picCallBack*/);
                 }
-                finish();
+                //finish();
             } else {
                 //完成选择
                 if (mSelectPhotos.size() > 0) {
@@ -279,13 +279,33 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
                         //需要压缩
                         compress();
                     } else {
-                        picCallBack.onPicSelected(p);
-                        finish();
+                        mHandler.obtainMessage(0, p).sendToTarget();
                     }
                 }
             }
         }
     }
+
+
+    Handler mHandler = new Handler(Looper.getMainLooper(), new Handler.Callback() {
+        @Override
+        public boolean handleMessage(Message msg) {
+            String[] compressPaths = (String[]) msg.obj;
+            if (picCallBack == null) {
+                Intent data = new Intent();
+                data.putExtra("imgList", compressPaths);
+                setResult(RESULT_OK, data);
+            } else {
+                picCallBack.onPicSelected(compressPaths);
+            }
+            if (mProgressDialog != null) {
+                mProgressDialog.dismiss();
+            }
+            finish();
+            return true;
+        }
+    });
+    ProgressDialog mProgressDialog;
 
     //提取视频缩略图
     private void getThumb(final String[] videoPaths) {
@@ -312,24 +332,6 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
         }
         mHandler.obtainMessage(0, videoPaths).sendToTarget();
     }
-
-    Handler mHandler = new Handler(Looper.getMainLooper(), new Handler.Callback() {
-        @Override
-        public boolean handleMessage(Message msg) {
-            String[] compressPaths = (String[]) msg.obj;
-            if (picCallBack == null) {
-                Intent data = new Intent();
-                data.putExtra("imgList", compressPaths);
-                setResult(RESULT_OK, data);
-            } else {
-                picCallBack.onPicSelected(compressPaths);
-            }
-            mProgressDialog.dismiss();
-            finish();
-            return true;
-        }
-    });
-    ProgressDialog mProgressDialog;
 
     //压缩图片
     private void compress() {
@@ -543,15 +545,15 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
                     sendBroadcast(localIntent);
                     //需要裁剪
                     if (photoOptions.crop && photoOptions.takeNum < 2) {
-                        CropActivity.startSelect(this, path, photoOptions, picCallBack);
-                        finish();
+                        CropActivity.startSelect(this, path, photoOptions/*, picCallBack*/);
+                        //finish();
                     }
                     break;
-                /*case 0x04:
+                case 0x04:
                     if (data == null) return;
-                    mOption.getCallback().doSelected(new String[]{data.getStringExtra("crop_path")});
-                    finish();
-                    break;*/
+                    String path1 = data.getStringExtra("path");
+                    mHandler.obtainMessage(0, new String[]{path1}).sendToTarget();
+                    break;
             }
         }
     }

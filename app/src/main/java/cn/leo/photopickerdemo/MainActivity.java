@@ -54,22 +54,26 @@ public class MainActivity extends AppCompatActivity {
 
     public void selectSinglePhoto(View v) {
         //选择一张图片不裁剪
-        PhotoPicker.selectVideo(this).take(new PhotoPicker.PhotoCallBack() {
-            @Override
-            public void onPicSelected(String[] path) {
-                Glide.with(MainActivity.this)
-                        .load(path[0])
-                        .centerCrop()
-                        .into(mImageView);
-                Toast.makeText(MainActivity.this, "" + Arrays.toString(path), Toast.LENGTH_SHORT).show();
-            }
-        });
+        PhotoPicker.selectPhoto(this)
+                .compress(50, 50)
+                .sizeLimit(10 * 1024)
+                .take(new PhotoPicker.PhotoCallBack() {
+                    @Override
+                    public void onPicSelected(String[] path) {
+                        Glide.with(MainActivity.this)
+                                .load(path[0])
+                                .centerCrop()
+                                .into(mImageView);
+                        Toast.makeText(MainActivity.this, "" + Arrays.toString(path), Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 
     public void multSelect(View v) {
         //选择多张图片
         PhotoPicker.selectPhoto(this)
                 .multi(3)
+                .sizeLimit(500 * 1024)
                 .compress(1080, 1920)
                 .take(new PhotoPicker.PhotoCallBack() {
 
