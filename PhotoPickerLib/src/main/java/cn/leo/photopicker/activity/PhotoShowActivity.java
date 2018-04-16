@@ -8,6 +8,7 @@ import android.support.annotation.NonNull;
 import android.support.v4.view.ViewPager;
 import android.view.WindowManager;
 import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
 
 import com.bumptech.glide.Glide;
@@ -15,17 +16,20 @@ import com.bumptech.glide.Glide;
 import java.util.ArrayList;
 
 import cn.leo.photopicker.R;
+import cn.leo.photopicker.utils.ToastUtil;
 import cn.leo.photopicker.view.BannerView;
 
 public class PhotoShowActivity extends Activity {
     private static final String EXTRA_STARTING_ALBUM_POSITION = "extra_starting_item_position";
     private static final String EXTRA_CURRENT_ALBUM_POSITION = "extra_current_item_position";
     private static final String STATE_CURRENT_PAGE_POSITION = "state_current_page_position";
-    private BannerView mCarouselView;
+    private BannerView mBannerView;
     private int mCurrentPosition;
     private int mStartingPosition;
     private CheckBox mCheckBox;
     private ArrayList<String> mImages;
+    private ArrayList<String> mChecks;
+    private int mMax;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,30 +43,27 @@ public class PhotoShowActivity extends Activity {
         } else {
             mCurrentPosition = savedInstanceState.getInt(STATE_CURRENT_PAGE_POSITION);
         }
-
         initView();
     }
 
     private void initView() {
         Intent intent = getIntent();
         //图片是否选中
-        boolean check = intent.getBooleanExtra("check", false);
-        mCheckBox = (CheckBox) findViewById(R.id.cb_check);
-        mCheckBox.setChecked(check);
-
+        //boolean check = intent.getBooleanExtra("check", false);
         mImages = intent.getStringArrayListExtra("images");
-        //int index = intent.getIntExtra("index", 0);
-        mCarouselView = (BannerView) findViewById(R.id.carouselView);
+        mChecks = intent.getStringArrayListExtra("check");
+        mCurrentPosition = intent.getIntExtra(EXTRA_STARTING_ALBUM_POSITION, 0);
+        mMax = intent.getIntExtra("max", 0);
+        mCheckBox = findViewById(R.id.cb_check);
+        mCheckBox.setChecked(mChecks.contains(mImages.get(mCurrentPosition)));
+        mBannerView = findViewById(R.id.carouselView);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && mImages != null) {
-            mCarouselView.setTransitionName(mImages.get(mCurrentPosition));
+            mBannerView.setTransitionName(mImages.get(mCurrentPosition));
         }
-        mCarouselView.initImageLoader(new BannerView.ImageLoader() {
+        mBannerView.initImageLoader(new BannerView.ImageLoader() {
             @Override
             public void loadImage(ImageView imageView, String imagePath) {
-                /*if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    imageView.setTransitionName(imagePath);
-                }*/
                 Glide.with(imageView.getContext())
                         .load(imagePath)
                         .crossFade()
@@ -70,12 +71,30 @@ public class PhotoShowActivity extends Activity {
             }
         });
 
-        mCarouselView.setImageList(mImages, mImages.size() > 1);
-        mCarouselView.setCurrentItem(mCurrentPosition);
-        mCarouselView.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+        mBannerView.setImageList(mImages, mImages.size() > 1);
+        mBannerView.setCurrentItem(mCurrentPosition);
+        mBannerView.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
             @Override
             public void onPageSelected(int position) {
-                mCurrentPosition = position % 50000;
+                mCurrentPosition = position % mImages.size();
+                mCheckBox.setChecked(mChecks.contains(mImages.get(mCurrentPosition)));
+            }
+        });
+        mCheckBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                String e = mImages.get(mCurrentPosition);
+                if (isChecked) {
+                    if (mChecks.contains(e)) return;
+                    if (mChecks.size() >= mMax) {
+                        ToastUtil.showToast(PhotoShowActivity.this, "您最多只能选择" + mMax + "个");
+                        mCheckBox.setChecked(false);
+                    } else {
+                        mChecks.add(e);
+                    }
+                } else {
+                    mChecks.remove(e);
+                }
             }
         });
     }
@@ -91,8 +110,7 @@ public class PhotoShowActivity extends Activity {
         Intent data = new Intent();
         data.putExtra(EXTRA_STARTING_ALBUM_POSITION, mStartingPosition);
         data.putExtra(EXTRA_CURRENT_ALBUM_POSITION, mCurrentPosition);
-        data.putExtra("path", mImages.get(mCurrentPosition));
-        data.putExtra("check", mCheckBox.isChecked());
+        data.putStringArrayListExtra("check", mChecks);
         setResult(RESULT_OK, data);
         super.finishAfterTransition();
     }

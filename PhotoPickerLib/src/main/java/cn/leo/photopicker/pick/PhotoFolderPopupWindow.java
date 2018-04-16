@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import cn.leo.photopicker.R;
+import cn.leo.photopicker.bean.PhotoBean;
 
 /**
  * 图片选择器菜单选择界面
@@ -29,7 +30,7 @@ public class PhotoFolderPopupWindow extends PopupWindow implements
     private ListView mFolderView;
     private Callback mCallback;
     private ArrayList<String> mFolders;
-    private HashMap<String, ArrayList<String>> mAllFile;
+    private HashMap<String, ArrayList<PhotoBean>> mAllFile;
 
     public PhotoFolderPopupWindow(Context context, int height, Callback callback) {
         super(LayoutInflater.from(context).inflate(R.layout.popup_window_folder, null),
@@ -57,7 +58,7 @@ public class PhotoFolderPopupWindow extends PopupWindow implements
 
     }
 
-    public void setAdapter(HashMap<String, ArrayList<String>> folders) {
+    public void setAdapter(HashMap<String, ArrayList<PhotoBean>> folders) {
         mAllFile = folders;
         mFolders = PhotoProvider.getDirList(folders);
         FolderAdapter folderAdapter = new FolderAdapter();
@@ -146,14 +147,14 @@ public class PhotoFolderPopupWindow extends PopupWindow implements
         }
 
         public void setData(String s) {
-            List<String> fNum = mAllFile.get(s);
-            if ("全部".equals(s) ) {
+            List<PhotoBean> fNum = mAllFile.get(s);
+            if ("全部".equals(s)) {
                 fNum = PhotoProvider.getAllPhotos(mAllFile);
             }
             tv_name.setText(s);
             if (fNum != null && fNum.size() > 0) {
                 tv_size.setText(String.format("(%s)", fNum.size()));
-                String path = fNum.get(0);
+                String path = fNum.get(0).path;
                 Glide.with(itemView.getContext()).load(path).centerCrop().into(iv_image);
             }
         }

@@ -17,15 +17,10 @@ import android.support.v4.app.Fragment;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.AdapterView;
-import android.widget.BaseAdapter;
-import android.widget.CheckBox;
-import android.widget.CompoundButton;
 import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -42,21 +37,22 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import cn.leo.photopicker.R;
+import cn.leo.photopicker.adapter.PhotoListAdapter;
+import cn.leo.photopicker.bean.PhotoBean;
 import cn.leo.photopicker.crop.CropUtil;
 import cn.leo.photopicker.pick.FragmentCallback;
 import cn.leo.photopicker.pick.ImageCompressUtil;
 import cn.leo.photopicker.pick.MediaStoreContentObserver;
 import cn.leo.photopicker.pick.PhotoFolderPopupWindow;
 import cn.leo.photopicker.pick.PhotoOptions;
-import cn.leo.photopicker.pick.PhotoPicker;
 import cn.leo.photopicker.pick.PhotoPickerFileProvider;
 import cn.leo.photopicker.pick.PhotoProvider;
 import cn.leo.photopicker.utils.PermissionUtil;
 import cn.leo.photopicker.utils.ToastUtil;
-import cn.leo.photopicker.utils.VideoUtil;
 import cn.leo.photopicker.view.TransitionElement;
 
-public class TakePhotoActivity extends AppCompatActivity implements View.OnClickListener, AdapterView.OnItemClickListener {
+public class TakePhotoActivity extends AppCompatActivity implements View.OnClickListener, AdapterView.OnItemClickListener, PhotoListAdapter.OnSelectChangeListener {
+    private static final String EXTRA_STARTING_ALBUM_POSITION = "extra_starting_item_position";
     public static final int REQUEST_CLIP = 0x03;
     public static final int REQUEST_CHECK = 0x04;
     private ImageView mIvBack;
@@ -64,17 +60,12 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
     private ImageView mIvArrow;
     private GridView mGvPhotos;
     private RelativeLayout mRlBar;
-    private ArrayList<String> mAllPhotos;
-    private HashMap<String, ArrayList<String>> mDiskPhotos;
-    private ArrayList<String> mSelectPhotos = new ArrayList<>();
-    private GVAdapter mAdapter;
+    private HashMap<String, ArrayList<PhotoBean>> mDiskPhotos;
+    private PhotoListAdapter mAdapter;
     private String mCamImageName;
     private static PhotoOptions photoOptions;
-    private static PhotoPicker.PhotoCallBack picCallBack;
     private TextView mBtnComplete;
     private LinearLayout mLlTitleContainer;
-    private HashMap<String, ImageView> imageViews = new HashMap<>();
-    private VideoUtil mVideoUtil;
     private MediaStoreContentObserver mMediaStoreContentObserver;
 
     @Override
@@ -155,8 +146,8 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
     /**
      * 开启选择
      *
-     * @param context
-     * @param options
+     * @param context 上下文
+     * @param options 选择配置参数
      */
 
     public static void startSelect(Fragment context, PhotoOptions options) {
@@ -166,14 +157,23 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
     }
 
     private void initData() {
-        mVideoUtil = new VideoUtil(this);
-        mAdapter = new GVAdapter();
+        mAdapter = new PhotoListAdapter(photoOptions, this);
         mGvPhotos.setAdapter(mAdapter);
         refreshData();
         mMediaStoreContentObserver = new MediaStoreContentObserver(this, new Handler());
         Uri imageUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
         getContentResolver().registerContentObserver(imageUri, false,
                 mMediaStoreContentObserver);
+    }
+
+
+    @Override
+    public void onSelectChange(ArrayList<String> selectPhotos) {
+        String text = "完成(" + selectPhotos.size() + "/" + photoOptions.takeNum + ")";
+        if (photoOptions.crop || photoOptions.takeNum < 2) {
+            text = "完成";
+        }
+        mBtnComplete.setText(text);
     }
 
     @Override
@@ -192,20 +192,21 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
                 if (photoOptions.type == PhotoOptions.TYPE_PHOTO) {
                     mDiskPhotos = PhotoProvider.getDiskPhotos(TakePhotoActivity.this);
                 } else {
-                    mDiskPhotos = PhotoProvider.getDiskVideos(TakePhotoActivity.this, mVideoUtil);
+                    mDiskPhotos = PhotoProvider.getDiskVideos(TakePhotoActivity.this);
                 }
+                final ArrayList<PhotoBean> photoBeans;
                 if (mDiskPhotos.containsKey("Camera")) {
-                    mAllPhotos = mDiskPhotos.get("Camera");
+                    photoBeans = mDiskPhotos.get("Camera");
                     title = "Camera";
                 } else {
-                    mAllPhotos = PhotoProvider.getAllPhotos(mDiskPhotos);
+                    photoBeans = PhotoProvider.getAllPhotos(mDiskPhotos);
                 }
                 final String s = title;
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         mTvTitle.setText(s);
-                        mAdapter.notifyDataSetChanged();
+                        mAdapter.setData(photoBeans);
                     }
                 });
             }
@@ -214,16 +215,15 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
 
 
     private void initView() {
-        mRlBar = (RelativeLayout) findViewById(R.id.photo_picker_rl_bar);
-        mIvBack = (ImageView) findViewById(R.id.photo_picker_iv_back);
-        mIvArrow = (ImageView) findViewById(R.id.photo_picker_iv_arrow);
-        mTvTitle = (TextView) findViewById(R.id.photo_picker_tv_title);
-        mGvPhotos = (GridView) findViewById(R.id.photo_picker_gv_photos);
-        mLlTitleContainer = (LinearLayout) findViewById(R.id.photo_picker_ll_titlecontainer);
-        mBtnComplete = (TextView) findViewById(R.id.tv_btn_complete);
-        //mBtnComplete.setVisibility(photoOptions.takeNum > 1 ? View.VISIBLE : View.GONE);
+        mRlBar = findViewById(R.id.photo_picker_rl_bar);
+        mIvBack = findViewById(R.id.photo_picker_iv_back);
+        mIvArrow = findViewById(R.id.photo_picker_iv_arrow);
+        mTvTitle = findViewById(R.id.photo_picker_tv_title);
+        mGvPhotos = findViewById(R.id.photo_picker_gv_photos);
+        mLlTitleContainer = findViewById(R.id.photo_picker_ll_titlecontainer);
+        mBtnComplete = findViewById(R.id.tv_btn_complete);
         if (photoOptions != null) {
-            String text = "完成(" + mSelectPhotos.size() + "/" + photoOptions.takeNum + ")";
+            String text = "完成(0/" + photoOptions.takeNum + ")";
             if (photoOptions.crop || photoOptions.takeNum < 2) {
                 text = "完成";
             }
@@ -233,8 +233,6 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
 
     private void initEvent() {
         mIvBack.setOnClickListener(this);
-        //mIvArrow.setOnClickListener(this);
-        //mTvTitle.setOnClickListener(this);
         mBtnComplete.setOnClickListener(this);
         mGvPhotos.setOnItemClickListener(this);
         mLlTitleContainer.setOnClickListener(this);
@@ -257,8 +255,8 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
     }
 
     private void complete() {
-        String[] p = new String[mSelectPhotos.size()];
-        mSelectPhotos.toArray(p);
+        String[] p = new String[mAdapter.getSelectPhotos().size()];
+        mAdapter.getSelectPhotos().toArray(p);
         //单选并裁剪
         if (photoOptions.crop && photoOptions.takeNum < 2) {
             if (p.length == 1) {
@@ -267,7 +265,7 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
             //finish();
         } else {
             //完成选择
-            if (mSelectPhotos.size() > 0) {
+            if (mAdapter.getSelectPhotos().size() > 0) {
                 if (photoOptions.type == PhotoOptions.TYPE_VIDEO) {
                     //如果是视频，需要创建缩略图
                     getThumb(p);
@@ -286,13 +284,9 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
         @Override
         public boolean handleMessage(Message msg) {
             String[] compressPaths = (String[]) msg.obj;
-            if (picCallBack == null) {
-                Intent data = new Intent();
-                data.putExtra("imgList", compressPaths);
-                setResult(RESULT_OK, data);
-            } else {
-                picCallBack.onPicSelected(compressPaths);
-            }
+            Intent data = new Intent();
+            data.putExtra("imgList", compressPaths);
+            setResult(RESULT_OK, data);
             if (mProgressDialog != null) {
                 mProgressDialog.dismiss();
             }
@@ -310,8 +304,8 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
             mProgressDialog.setCancelable(false);
         }
         mProgressDialog.show();
-        for (int i = 0; i < mSelectPhotos.size(); i++) {
-            final String path = mSelectPhotos.get(i);
+        for (int i = 0; i < mAdapter.getSelectPhotos().size(); i++) {
+            final String path = mAdapter.getSelectPhotos().get(i);
             Glide.with(TakePhotoActivity.this)
                     .load(path)
                     .asBitmap()
@@ -339,9 +333,9 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
         new Thread() {
             @Override
             public void run() {
-                String[] compressPaths = new String[mSelectPhotos.size()];
-                for (int i = 0; i < mSelectPhotos.size(); i++) {
-                    String selectPhoto = mSelectPhotos.get(i);
+                String[] compressPaths = new String[mAdapter.getSelectPhotos().size()];
+                for (int i = 0; i < mAdapter.getSelectPhotos().size(); i++) {
+                    String selectPhoto = mAdapter.getSelectPhotos().get(i);
                     File file = new File(selectPhoto);
                     if (photoOptions.size > 0 && file.length() < photoOptions.size) {
                         compressPaths[i] = selectPhoto;
@@ -372,12 +366,12 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
                     public void onSelect(PhotoFolderPopupWindow popupWindow, String folder) {
                         popupWindow.dismiss();
 
-                        mAllPhotos = mDiskPhotos.get(folder);
+                        ArrayList<PhotoBean> photoBeans = mDiskPhotos.get(folder);
                         if ("全部".equals(folder)) {
-                            mAllPhotos = PhotoProvider.getAllPhotos(mDiskPhotos);
+                            photoBeans = PhotoProvider.getAllPhotos(mDiskPhotos);
                         }
                         mTvTitle.setText(folder);
-                        mAdapter.notifyDataSetChanged();
+                        mAdapter.setData(photoBeans);
                     }
 
                     @Override
@@ -404,7 +398,7 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
         } else {
             //视频预览
             if (photoOptions.type == PhotoOptions.TYPE_VIDEO) {
-                File file = new File(mAllPhotos.get(position - 1));
+                File file = new File(mAdapter.getPhoto(position - 1).path);
                 Intent intent = new Intent(Intent.ACTION_VIEW);
                 Uri uri;
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
@@ -428,16 +422,18 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
             }
 
             //点击一张照片
-            String path = mAllPhotos.get(position - 1);
+            String path = mAdapter.getPhoto(position - 1).path;
             ArrayList<String> pathList = new ArrayList<>();
             pathList.add(path);
             //照片预览
             Intent intent = new Intent(this, PhotoShowActivity.class);
-            intent.putExtra("check", mSelectPhotos.contains(path)); //传递选中
-            intent.putStringArrayListExtra("images", pathList); //预览一张
+//            intent.putExtra("check", mAdapter.getSelectPhotos().contains(path)); //传递选中
+//            intent.putStringArrayListExtra("images", pathList); //预览一张
             //预览所有
-            //intent.putExtra(EXTRA_STARTING_ALBUM_POSITION, position - 1);
-            //intent.putStringArrayListExtra("images", mAllPhotos);
+            intent.putExtra(EXTRA_STARTING_ALBUM_POSITION, position - 1);
+            intent.putStringArrayListExtra("images", mAdapter.getAllPhotoPaths());
+            intent.putStringArrayListExtra("check", mAdapter.getSelectPhotos());
+            intent.putExtra("max", photoOptions.takeNum);
             //共享动画
             TransitionElement.transitionStart(this, intent, view, path, REQUEST_CHECK);
         }
@@ -470,9 +466,7 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
             mCamImageName = CropUtil.getSaveVideoFullName();
         }
         File out = new File(savePath, mCamImageName);
-        /**
-         * android N 系统适配
-         */
+        //android N 系统适配
         Intent intent = new Intent();
         Uri uri;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
@@ -507,7 +501,9 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
                     if (mCamImageName == null) return;
                     //刷新显示
                     String path = CropUtil.getCameraPath() + mCamImageName;
-                    mAllPhotos.add(0, path);
+                    PhotoBean bean = new PhotoBean();
+                    bean.path = path;
+                    mAdapter.add(0, bean);
                     mAdapter.notifyDataSetChanged();
                     //通知系统相册更新
                     MediaScannerConnection.scanFile(this, new String[]{path}, null, null);
@@ -517,164 +513,10 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
                     }
                     break;
                 case REQUEST_CHECK:
-                    boolean check = data.getBooleanExtra("check", false);
-                    String path1 = data.getStringExtra("path");
-                    if (check) {
-                        if (!mSelectPhotos.contains(path1)) {
-                            mSelectPhotos.add(path1);
-                            mAdapter.notifyDataSetChanged();
-                        }
-                    } else {
-                        if (mSelectPhotos.contains(path1)) {
-                            mSelectPhotos.remove(path1);
-                            mAdapter.notifyDataSetChanged();
-                        }
-                    }
-
-            }
-        }
-    }
-
-
-    private class GVAdapter extends BaseAdapter {
-
-        @Override
-        public int getCount() {
-            if (mAllPhotos != null) {
-                return mAllPhotos.size() + 1;
-            }
-            return 0;
-        }
-
-        @Override
-        public Object getItem(int position) {
-            if (mAllPhotos != null) {
-                mAllPhotos.get(position);
-            }
-            return null;
-        }
-
-        @Override
-        public long getItemId(int position) {
-            return position;
-        }
-
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            ViewHolder holder;
-            if (convertView == null) {
-                View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_photo, parent, false);
-                holder = new ViewHolder(view);
-            } else {
-                holder = (ViewHolder) convertView.getTag();
-            }
-            if (position == 0) {
-                holder.setCameraPic();
-            } else {
-                holder.setData(mAllPhotos.get(position - 1));
-            }
-            return holder.itemView;
-        }
-
-        class ViewHolder implements CompoundButton.OnCheckedChangeListener {
-            View itemView;
-            ImageView mIvPhoto;
-            CheckBox mCbCheck;
-            TextView mTvDuration;
-            String mPath;
-
-            ViewHolder(View itemView) {
-                this.itemView = itemView;
-                int screenWidth = CropUtil.getScreenWidth(itemView.getContext());
-                int itemSize = (int) ((screenWidth - CropUtil.dip2Px(itemView.getContext(), 4) + 0.5f) / 3);
-                ViewGroup.LayoutParams params = itemView.getLayoutParams();
-                params.height = itemSize;
-                params.width = itemSize;
-                itemView.setLayoutParams(params);
-                itemView.setTag(this);
-                mIvPhoto = (ImageView) itemView.findViewById(R.id.item_iv_photo);
-                mCbCheck = (CheckBox) itemView.findViewById(R.id.item_cb_check);
-                mTvDuration = (TextView) itemView.findViewById(R.id.tv_video_duration);
-                mCbCheck.setOnCheckedChangeListener(this);
-            }
-
-            public void setData(String path) {
-                mPath = path;
-                mCbCheck.setChecked(mSelectPhotos.contains(mPath)); //勾选框复用问题
-                mCbCheck.setVisibility(View.VISIBLE);
-                Glide.with(itemView.getContext())
-                        .load(path)
-                        .crossFade()
-                        .centerCrop()
-                        .into(mIvPhoto);
-                if (photoOptions.type == PhotoOptions.TYPE_VIDEO) {
-                    mTvDuration.setVisibility(View.VISIBLE);
-                    //读取时长和大小
-                    mTvDuration.setText(mVideoUtil.getTime(path));
-                    if (mVideoUtil.getDuration(path) > photoOptions.duration + 500) {
-                        mTvDuration.setTextColor(Color.RED);
-                    } else {
-                        mTvDuration.setTextColor(Color.WHITE);
-                    }
-                } else {
-                    mTvDuration.setVisibility(View.GONE);
-                }
-            }
-
-            void setCameraPic() {
-                mTvDuration.setVisibility(View.GONE);
-                mCbCheck.setVisibility(View.GONE);
-                mIvPhoto.setImageResource(R.mipmap.ic_tweet_select_picture_camera);
-            }
-
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (isChecked) {
-                    if (mSelectPhotos.contains(mPath)) {
-                        return;
-                    }
-                    if (photoOptions.type == PhotoOptions.TYPE_VIDEO) {
-                        VideoUtil.VideoInfo videoInfo = mVideoUtil.getVideoInfo(mPath);
-                        if (photoOptions.duration > 0 &&
-                                videoInfo.duration > photoOptions.duration + 500) {
-                            Toast.makeText(TakePhotoActivity.this,
-                                    "您选择的视频时长超出限制",
-                                    Toast.LENGTH_SHORT).show();
-                            mCbCheck.setChecked(false);
-                            return;
-                        }
-                        if (photoOptions.size > 0 &&
-                                videoInfo.size > photoOptions.size) {
-                            Toast.makeText(TakePhotoActivity.this,
-                                    "您选择的视频大小超出限制",
-                                    Toast.LENGTH_SHORT).show();
-                            mCbCheck.setChecked(false);
-                            return;
-                        }
-                    }
-                    if (mSelectPhotos.size() < photoOptions.takeNum) {
-                        mSelectPhotos.add(mPath);
-                    } else {
-                        String s = "张照片！";
-                        if (photoOptions.type == PhotoOptions.TYPE_VIDEO) {
-                            s = "个视频！";
-                        }
-                        Toast.makeText(TakePhotoActivity.this,
-                                "您最多只能选择" +
-                                        photoOptions.takeNum +
-                                        s,
-                                Toast.LENGTH_SHORT).show();
-                        mCbCheck.setChecked(false);
-                        return;
-                    }
-                } else {
-                    mSelectPhotos.remove(mPath);
-                }
-                String text = "完成(" + mSelectPhotos.size() + "/" + photoOptions.takeNum + ")";
-                if (photoOptions.crop || photoOptions.takeNum < 2) {
-                    text = "完成";
-                }
-                mBtnComplete.setText(text);
+                    ArrayList<String> checks = data.getStringArrayListExtra("check");
+                    mAdapter.getSelectPhotos().clear();
+                    mAdapter.getSelectPhotos().addAll(checks);
+                    mAdapter.notifyDataSetChanged();
             }
         }
     }
@@ -699,7 +541,7 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
     @Override
     protected void onRestart() {
         super.onRestart();
-        if (mAllPhotos == null || mAllPhotos.size() == 0) {
+        if (mAdapter.getCount() == 1) {
             initPermission();
         }
     }

@@ -13,7 +13,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 
-import cn.leo.photopicker.utils.VideoUtil;
+import cn.leo.photopicker.bean.PhotoBean;
 
 /**
  * Created by JarryLeo on 2017/5/20.
@@ -27,8 +27,8 @@ public class PhotoProvider {
      * @param context
      * @return
      */
-    public static HashMap<String, ArrayList<String>> getDiskPhotos(Activity context) {
-        HashMap<String, ArrayList<String>> allPic = new LinkedHashMap<>();
+    public static HashMap<String, ArrayList<PhotoBean>> getDiskPhotos(Activity context) {
+        HashMap<String, ArrayList<PhotoBean>> allPic = new LinkedHashMap<>();
         Uri mImageUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
         ContentResolver mContentResolver = context.getContentResolver();
         Cursor mCursor = mContentResolver.query(mImageUri, null, MediaStore.Images.Media.MIME_TYPE
@@ -38,15 +38,16 @@ public class PhotoProvider {
             while (mCursor.moveToNext()) {
                 // 获取图片的路径
                 String path = mCursor.getString(mCursor.getColumnIndex(MediaStore.Images.Media.DATA));
+                PhotoBean bean = new PhotoBean();
+                bean.path = path;
                 File picFile = new File(path);
                 if (picFile.exists()) {
                     String parentName = picFile.getParentFile().getName();
-
                     if (allPic.containsKey(parentName)) {
-                        allPic.get(parentName).add(path);
+                        allPic.get(parentName).add(bean);
                     } else {
-                        ArrayList<String> chileList = new ArrayList<String>();
-                        chileList.add(path);
+                        ArrayList<PhotoBean> chileList = new ArrayList<>();
+                        chileList.add(bean);
                         allPic.put(parentName, chileList);
                     }
                 }
@@ -63,8 +64,8 @@ public class PhotoProvider {
      * @param context
      * @return
      */
-    public static HashMap<String, ArrayList<String>> getDiskVideos(Activity context, VideoUtil videoUtil) {
-        HashMap<String, ArrayList<String>> allPic = new LinkedHashMap<>();
+    public static HashMap<String, ArrayList<PhotoBean>> getDiskVideos(Activity context) {
+        HashMap<String, ArrayList<PhotoBean>> allPic = new LinkedHashMap<>();
         Uri mImageUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
         ContentResolver mContentResolver = context.getContentResolver();
         Cursor cursor = mContentResolver.query(mImageUri, null, MediaStore.Video.Media.MIME_TYPE
@@ -74,21 +75,21 @@ public class PhotoProvider {
             while (cursor.moveToNext()) {
                 // 获取视频的路径
                 String path = cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.DATA));
+                PhotoBean bean = new PhotoBean();
+                bean.path = path;
                 File picFile = new File(path);
                 if (picFile.exists()) {
                     String parentName = picFile.getParentFile().getName();
-
                     if (allPic.containsKey(parentName)) {
-                        allPic.get(parentName).add(path);
+                        allPic.get(parentName).add(bean);
                     } else {
-                        ArrayList<String> chileList = new ArrayList<String>();
-                        chileList.add(path);
+                        ArrayList<PhotoBean> chileList = new ArrayList<>();
+                        chileList.add(bean);
                         allPic.put(parentName, chileList);
                     }
                 }
-                int size = cursor.getInt(cursor.getColumnIndex(MediaStore.Video.Media.SIZE));
-                int duration = cursor.getInt(cursor.getColumnIndex(MediaStore.Video.Media.DURATION));
-                videoUtil.put(path, new VideoUtil.VideoInfo(size, duration));
+                bean.size = cursor.getInt(cursor.getColumnIndex(MediaStore.Video.Media.SIZE));
+                bean.duration = cursor.getInt(cursor.getColumnIndex(MediaStore.Video.Media.DURATION));
             }
             cursor.close();
         }
@@ -101,14 +102,12 @@ public class PhotoProvider {
      * @param photos
      * @return
      */
-    public static ArrayList<String> getDirList(HashMap<String, ArrayList<String>> photos) {
+    public static ArrayList<String> getDirList(HashMap<String, ArrayList<PhotoBean>> photos) {
         if (photos == null) return null;
         ArrayList<String> dirs = new ArrayList<>();
         Set<String> set = photos.keySet();
         dirs.add("全部");
-        for (String dir : set) {
-            dirs.add(dir);
-        }
+        dirs.addAll(set);
         return dirs;
     }
 
@@ -118,12 +117,11 @@ public class PhotoProvider {
      * @param photos
      * @return
      */
-    public static ArrayList<String> getAllPhotos(HashMap<String, ArrayList<String>> photos) {
-        ArrayList<String> allPhotos = new ArrayList<>();
+    public static ArrayList<PhotoBean> getAllPhotos(HashMap<String, ArrayList<PhotoBean>> photos) {
+        ArrayList<PhotoBean> allPhotos = new ArrayList<>();
         Set<String> set = photos.keySet();
-        for (String dir : set
-                ) {
-            List<String> list = photos.get(dir);
+        for (String dir : set) {
+            List<PhotoBean> list = photos.get(dir);
             allPhotos.addAll(list);
         }
         return allPhotos;
