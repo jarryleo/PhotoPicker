@@ -517,6 +517,7 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
                     mAdapter.getSelectPhotos().clear();
                     mAdapter.getSelectPhotos().addAll(checks);
                     mAdapter.notifyDataSetChanged();
+                    onSelectChange(mAdapter.getSelectPhotos());
             }
         }
     }
