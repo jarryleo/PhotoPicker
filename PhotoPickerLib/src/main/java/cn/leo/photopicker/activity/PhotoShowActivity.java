@@ -15,13 +15,13 @@ import com.bumptech.glide.Glide;
 import java.util.ArrayList;
 
 import cn.leo.photopicker.R;
-import cn.leo.photopicker.view.CarouselView;
+import cn.leo.photopicker.view.BannerView;
 
 public class PhotoShowActivity extends Activity {
     private static final String EXTRA_STARTING_ALBUM_POSITION = "extra_starting_item_position";
     private static final String EXTRA_CURRENT_ALBUM_POSITION = "extra_current_item_position";
     private static final String STATE_CURRENT_PAGE_POSITION = "state_current_page_position";
-    private CarouselView mCarouselView;
+    private BannerView mCarouselView;
     private int mCurrentPosition;
     private int mStartingPosition;
     private CheckBox mCheckBox;
@@ -56,12 +56,12 @@ public class PhotoShowActivity extends Activity {
 
         mImages = intent.getStringArrayListExtra("images");
         //int index = intent.getIntExtra("index", 0);
-        mCarouselView = (CarouselView) findViewById(R.id.carouselView);
+        mCarouselView = (BannerView) findViewById(R.id.carouselView);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && mImages != null) {
             mCarouselView.setTransitionName(mImages.get(mCurrentPosition));
         }
-        mCarouselView.initImageLoader(new CarouselView.ImageLoader() {
+        mCarouselView.initImageLoader(new BannerView.ImageLoader() {
             @Override
             public void loadImage(ImageView imageView, String imagePath) {
                 /*if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {

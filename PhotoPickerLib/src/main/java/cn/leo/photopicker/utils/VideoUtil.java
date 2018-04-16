@@ -1,4 +1,4 @@
-package cn.leo.photopicker.pick;
+package cn.leo.photopicker.utils;
 
 import android.arch.lifecycle.Lifecycle;
 import android.arch.lifecycle.LifecycleObserver;

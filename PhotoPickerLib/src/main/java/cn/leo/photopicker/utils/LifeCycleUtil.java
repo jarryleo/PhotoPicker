@@ -1,7 +1,11 @@
-package cn.leo.photopicker.pick;
+package cn.leo.photopicker.utils;
 
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
+
+import cn.leo.photopicker.pick.FragmentCallback;
+import cn.leo.photopicker.pick.PhotoOptions;
+import cn.leo.photopicker.pick.PhotoPicker;
 
 /**
  * Created by Leo on 2018/1/4.

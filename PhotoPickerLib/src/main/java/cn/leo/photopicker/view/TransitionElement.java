@@ -13,25 +13,27 @@ import android.view.View;
  */
 
 public class TransitionElement {
+    public static int TRANSITION_REQUEST_CODE = 100;
 
-    public static void transitonStart(Activity srcActivity, Class<?> destClass, View srcView, String transtionName) {
+
+    public static void transitonStart(Activity srcActivity, Class<?> destClass, View srcView, String sharedElementName) {
         ActivityOptionsCompat optionsCompat = ActivityOptionsCompat
-                .makeSceneTransitionAnimation(srcActivity, srcView, transtionName);
+                .makeSceneTransitionAnimation(srcActivity, srcView, sharedElementName);
         Bundle bundle = optionsCompat.toBundle();
         Intent intent = new Intent(srcActivity, destClass);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            srcActivity.startActivityForResult(intent, 100, bundle);
+            srcActivity.startActivityForResult(intent, TRANSITION_REQUEST_CODE, bundle);
         } else {
             srcActivity.startActivity(intent);
         }
     }
 
-    public static void transitonStart(Activity srcActivity, Intent intent, View srcView, String transtionName) {
+    public static void transitonStart(Activity srcActivity, Intent intent, View srcView, String sharedElementName) {
         ActivityOptionsCompat optionsCompat = ActivityOptionsCompat
-                .makeSceneTransitionAnimation(srcActivity, srcView, transtionName);
+                .makeSceneTransitionAnimation(srcActivity, srcView, sharedElementName);
         Bundle bundle = optionsCompat.toBundle();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            srcActivity.startActivityForResult(intent, 100, bundle);
+            srcActivity.startActivityForResult(intent, TRANSITION_REQUEST_CODE, bundle);
         } else {
             srcActivity.startActivity(intent);
         }
@@ -43,7 +45,7 @@ public class TransitionElement {
         Bundle bundle = optionsCompat.toBundle();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
             srcActivity.startActivity(intent, bundle);
-            srcActivity.startActivityForResult(intent, 100, bundle);
+            srcActivity.startActivityForResult(intent, TRANSITION_REQUEST_CODE, bundle);
         } else {
             srcActivity.startActivity(intent);
         }

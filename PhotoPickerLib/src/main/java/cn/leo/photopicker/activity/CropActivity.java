@@ -50,11 +50,9 @@ public class CropActivity extends Activity implements View.OnClickListener {
      * @param options
      */
     public static void startSelect(Activity context, String url,
-                                   PhotoOptions options
-                                   /*PhotoPicker.PhotoCallBack callBack*/) {
+                                   PhotoOptions options) {
         mUrl = url;
         photoOptions = options;
-        //picCallBack = callBack;
         context.startActivityForResult(new Intent(context, CropActivity.class), 0x04);
     }
 

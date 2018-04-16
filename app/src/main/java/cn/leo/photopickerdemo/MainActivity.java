@@ -13,12 +13,13 @@ import com.bumptech.glide.load.resource.drawable.GlideDrawable;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 
-import cn.leo.photopicker.crop.CropUtil;
 import cn.leo.photopicker.pick.PhotoPicker;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements PhotoLoader.OnPhotoLoadFinishListener {
 
     private ImageView mImageView;
     private ImageShow mLlContainer;
@@ -69,7 +70,7 @@ public class MainActivity extends AppCompatActivity {
                 });
     }
 
-    public void multSelect(View v) {
+    public void multiSelect(View v) {
         //选择多张图片
         PhotoPicker.selectPhoto(this)
                 .multi(3)
@@ -111,4 +112,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    private void testLoader() {
+        getLoaderManager().initLoader(0, null, new PhotoLoader(this, this));
+    }
+
+    @Override
+    public void onPhotoLoadFinish(HashMap<String, ArrayList<String>> photos) {
+
+    }
 }

@@ -39,7 +39,7 @@ public class FragmentCallback extends Fragment {
                 getFragmentManager().beginTransaction();
         fragmentTransaction.detach(this);
         fragmentTransaction.remove(this);
-        fragmentTransaction.commit();
+        fragmentTransaction.commitAllowingStateLoss();
     }
 
     public void setPhotoCallBack(PhotoOptions options,

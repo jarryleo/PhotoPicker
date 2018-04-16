@@ -2,6 +2,8 @@ package cn.leo.photopicker.pick;
 
 import android.support.v4.app.FragmentActivity;
 
+import cn.leo.photopicker.utils.LifeCycleUtil;
+
 /**
  * Created by JarryLeo on 2017/5/20.
  */
@@ -20,14 +22,12 @@ public class PhotoPicker {
         void onPicSelected(String[] path);
     }
 
-
     public static class SelectPhoto {
         private FragmentActivity mActivity;
         private PhotoOptions options = new PhotoOptions();
 
         private SelectPhoto(FragmentActivity activity) {
             mActivity = activity;
-
         }
 
         public SelectPhoto crop(int cropWidth, int cropHeight) {
@@ -55,7 +55,6 @@ public class PhotoPicker {
 
         public void take(PhotoCallBack callBack) {
             LifeCycleUtil.setLifeCycleListener(mActivity, options, callBack);
-            //TakePhotoActivity.startSelect(mActivity, options, callBack);
         }
     }
 
@@ -85,7 +84,6 @@ public class PhotoPicker {
 
         public void take(PhotoCallBack callBack) {
             LifeCycleUtil.setLifeCycleListener(mActivity, options, callBack);
-            //TakePhotoActivity.startSelect(mActivity, options, callBack);
         }
     }
 }

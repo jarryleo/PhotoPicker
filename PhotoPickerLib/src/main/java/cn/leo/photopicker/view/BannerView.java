@@ -21,7 +21,7 @@ import cn.leo.photopicker.photoview.PhotoView;
  * Created by Leo on 2017/7/12.
  */
 
-public class CarouselView extends FrameLayout implements ViewPager.OnPageChangeListener {
+public class BannerView extends FrameLayout implements ViewPager.OnPageChangeListener {
     private List<String> mImageList;
     private innerViewPager mViewPager;
     private ImageAdapter mAdapter;
@@ -34,15 +34,15 @@ public class CarouselView extends FrameLayout implements ViewPager.OnPageChangeL
     private OnPageClickListener mOnPageClickListener;
     private ViewPager.OnPageChangeListener mOnPageChangeListener;
 
-    public CarouselView(Context context) {
+    public BannerView(Context context) {
         this(context, null);
     }
 
-    public CarouselView(Context context, AttributeSet attrs) {
+    public BannerView(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
-    public CarouselView(Context context, AttributeSet attrs, int defStyleAttr) {
+    public BannerView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
     }
 
@@ -52,7 +52,7 @@ public class CarouselView extends FrameLayout implements ViewPager.OnPageChangeL
      * @param imageLoader
      * @return
      */
-    public CarouselView initImageLoader(ImageLoader imageLoader) {
+    public BannerView initImageLoader(ImageLoader imageLoader) {
         mImageLoader = imageLoader;
         return this;
     }

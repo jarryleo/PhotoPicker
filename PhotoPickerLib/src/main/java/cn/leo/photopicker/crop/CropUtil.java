@@ -17,10 +17,7 @@ public class CropUtil {
 
     public static boolean hasSDCard() {
         String status = Environment.getExternalStorageState();
-        if (!status.equals(Environment.MEDIA_MOUNTED)) {
-            return false;
-        }
-        return true;
+        return status.equals(Environment.MEDIA_MOUNTED);
     }
 
     /**

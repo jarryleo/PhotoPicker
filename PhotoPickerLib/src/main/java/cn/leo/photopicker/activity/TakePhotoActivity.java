@@ -1,12 +1,12 @@
 package cn.leo.photopicker.activity;
 
-import android.Manifest;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Rect;
+import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -40,7 +40,6 @@ import com.bumptech.glide.request.animation.GlideAnimation;
 import com.bumptech.glide.request.target.SimpleTarget;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -49,23 +48,22 @@ import cn.leo.photopicker.crop.CropUtil;
 import cn.leo.photopicker.pick.FragmentCallback;
 import cn.leo.photopicker.pick.ImageCompressUtil;
 import cn.leo.photopicker.pick.MediaStoreContentObserver;
-import cn.leo.photopicker.pick.PermissionUtil;
 import cn.leo.photopicker.pick.PhotoFolderPopupWindow;
 import cn.leo.photopicker.pick.PhotoOptions;
 import cn.leo.photopicker.pick.PhotoPicker;
 import cn.leo.photopicker.pick.PhotoProvider;
-import cn.leo.photopicker.pick.VideoUtil;
+import cn.leo.photopicker.utils.PermissionUtil;
+import cn.leo.photopicker.utils.ToastUtil;
+import cn.leo.photopicker.utils.VideoUtil;
 
 public class TakePhotoActivity extends AppCompatActivity implements View.OnClickListener, AdapterView.OnItemClickListener {
-    private static final String EXTRA_STARTING_ALBUM_POSITION = "extra_starting_item_position";
-    private static final String EXTRA_CURRENT_ALBUM_POSITION = "extra_current_item_position";
     private ImageView mIvBack;
     private TextView mTvTitle;
     private ImageView mIvArrow;
     private GridView mGvPhotos;
     private RelativeLayout mRlBar;
-    private HashMap<String, ArrayList<String>> mDiskPhotos;
     private ArrayList<String> mAllPhotos;
+    private HashMap<String, ArrayList<String>> mDiskPhotos;
     private ArrayList<String> mSelectPhotos = new ArrayList<>();
     private GVAdapter mAdapter;
     private String mCamImageName;
@@ -105,7 +103,8 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
             // 状态栏字体设置为深色，SYSTEM_UI_FLAG_LIGHT_STATUS_BAR 为SDK23增加
             win.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN /*|
                     View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR*/);
-            //win.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN); //不调节状态栏文字颜色
+            //不调节状态栏文字颜色
+            //win.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
             // 部分机型的statusbar会有半透明的黑色背景
             win.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
             win.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
@@ -117,44 +116,40 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
      * 检查权限
      */
     private void initPermission() {
-        boolean SDPermission = PermissionUtil.checkPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
-        if (!SDPermission) {
-            PermissionUtil.requestPermission(this,
-                    Manifest.permission.READ_EXTERNAL_STORAGE, "需要访问相册权限,点击确定前往设置", 100);
-        } else {
-            initData();
-        }
+        PermissionUtil.getInstance(this)
+                .request(PermissionUtil.permission.READ_EXTERNAL_STORAGE,
+                        PermissionUtil.permission.WRITE_EXTERNAL_STORAGE)
+                .execute(new PermissionUtil.Result() {
+                    @Override
+                    public void onSuccess() {
+                        initData();
+                    }
+
+                    @Override
+                    public void onFailed() {
+                        ToastUtil.showToast(TakePhotoActivity.this, "缺少权限，图片加载失败！");
+                    }
+                });
     }
 
+    /**
+     * 获取相机权限
+     */
     private void initCameraPermission() {
-        boolean cameraPermission = PermissionUtil.checkPermission(this, Manifest.permission.CAMERA);
-        if (!cameraPermission) {
-            PermissionUtil.requestPermission(this,
-                    Manifest.permission.CAMERA, "需要访问相机权限,点击确定前往设置", 200);
-        } else {
-            toOpenCamera();
-        }
-    }
+        PermissionUtil.getInstance(this)
+                .request(PermissionUtil.permission.CAMERA,
+                        PermissionUtil.permission.WRITE_EXTERNAL_STORAGE)
+                .execute(new PermissionUtil.Result() {
+                    @Override
+                    public void onSuccess() {
+                        toOpenCamera();
+                    }
 
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        boolean result = PermissionUtil.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == 100) {
-            if (!result) {
-                Toast.makeText(this, "缺少权限，图片加载失败！", Toast.LENGTH_SHORT).show();
-                finish();
-            } else {
-                initData();
-            }
-        } else if (requestCode == 200) {
-            if (!result) {
-                Toast.makeText(this, "缺少权限，打开相机失败！", Toast.LENGTH_SHORT).show();
-            } else {
-                toOpenCamera();
-            }
-        }
-
+                    @Override
+                    public void onFailed() {
+                        ToastUtil.showToast(TakePhotoActivity.this, "缺少权限，打开相机失败！");
+                    }
+                });
     }
 
     /**
@@ -254,6 +249,7 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
     @Override
     public void onClick(View v) {
         if (v == mIvBack) {
+            //返回
             finish();
         }
         if (v == mLlTitleContainer) {
@@ -261,26 +257,31 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
             showDirPopWindow();
         }
         if (v == mBtnComplete) {
-            String[] p = new String[mSelectPhotos.size()];
-            mSelectPhotos.toArray(p);
-            //单选并裁剪
-            if (photoOptions.crop && photoOptions.takeNum < 2) {
-                if (p.length == 1) {
-                    CropActivity.startSelect(this, p[0], photoOptions/*, picCallBack*/);
-                }
-                //finish();
-            } else {
-                //完成选择
-                if (mSelectPhotos.size() > 0) {
-                    if (photoOptions.type == PhotoOptions.TYPE_VIDEO) {
-                        //如果是视频，需要创建缩略图
-                        getThumb(p);
-                    } else if (photoOptions.compressWidth > 0 && photoOptions.compressHeight > 0) {
-                        //需要压缩
-                        compress();
-                    } else {
-                        mHandler.obtainMessage(0, p).sendToTarget();
-                    }
+            //完成选择
+            complete();
+        }
+    }
+
+    private void complete() {
+        String[] p = new String[mSelectPhotos.size()];
+        mSelectPhotos.toArray(p);
+        //单选并裁剪
+        if (photoOptions.crop && photoOptions.takeNum < 2) {
+            if (p.length == 1) {
+                CropActivity.startSelect(this, p[0], photoOptions/*, picCallBack*/);
+            }
+            //finish();
+        } else {
+            //完成选择
+            if (mSelectPhotos.size() > 0) {
+                if (photoOptions.type == PhotoOptions.TYPE_VIDEO) {
+                    //如果是视频，需要创建缩略图
+                    getThumb(p);
+                } else if (photoOptions.compressWidth > 0 && photoOptions.compressHeight > 0) {
+                    //需要压缩
+                    compress();
+                } else {
+                    mHandler.obtainMessage(0, p).sendToTarget();
                 }
             }
         }
@@ -448,20 +449,6 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
             } else {
                 startActivity(intent);
             }
-
-           /* //单张并开启裁剪
-            if (photoOptions.crop && photoOptions.takeNum < 2) {
-                CropActivity.startSelect(this, mPath, photoOptions, picCallBack);
-                finish();
-            } else if (photoOptions.takeNum < 2) {
-                //单张不开启裁剪
-                picCallBack.onPicSelected(new String[]{mPath});
-                finish();
-            } else {
-                //多张
-                GVAdapter.ViewHolder tag = (GVAdapter.ViewHolder) view.getTag();
-                tag.mCbCheck.setChecked(!tag.mCbCheck.isChecked());
-            }*/
         }
     }
 
@@ -503,6 +490,7 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
         } else {
             uri = Uri.fromFile(out);
         }
+        //视频选取条件限制
         if (photoOptions.type == PhotoOptions.TYPE_VIDEO) {
             intent.setAction(MediaStore.ACTION_VIDEO_CAPTURE);
             if (photoOptions.duration > 0) {
@@ -531,18 +519,7 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
                     mAllPhotos.add(0, path);
                     mAdapter.notifyDataSetChanged();
                     //通知系统相册更新
-                    // 其次把文件插入到系统图库
-                    try {
-                        if (photoOptions.type == PhotoOptions.TYPE_PHOTO) {
-                            MediaStore.Images.Media.insertImage(getContentResolver(),
-                                    path, mCamImageName, null);
-                        }
-                    } catch (FileNotFoundException e) {
-                        e.printStackTrace();
-                    }
-                    Uri localUri = Uri.fromFile(new File(path));
-                    Intent localIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, localUri);
-                    sendBroadcast(localIntent);
+                    MediaScannerConnection.scanFile(this, new String[]{path}, null, null);
                     //需要裁剪
                     if (photoOptions.crop && photoOptions.takeNum < 2) {
                         CropActivity.startSelect(this, path, photoOptions/*, picCallBack*/);
@@ -625,11 +602,6 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
                 mPath = path;
                 mCbCheck.setChecked(mSelectPhotos.contains(mPath)); //勾选框复用问题
                 mCbCheck.setVisibility(View.VISIBLE);
-                //mCbCheck.setVisibility(photoOptions.takeNum > 1 ? View.VISIBLE : View.GONE);
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    mIvPhoto.setTransitionName(path); //设置共享名称
-                    imageViews.put(path, mIvPhoto);
-                }
                 Glide.with(itemView.getContext())
                         .load(path)
                         .crossFade()
@@ -649,7 +621,7 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
                 }
             }
 
-            public void setCameraPic() {
+            void setCameraPic() {
                 mTvDuration.setVisibility(View.GONE);
                 mCbCheck.setVisibility(View.GONE);
                 mIvPhoto.setImageResource(R.mipmap.ic_tweet_select_picture_camera);
@@ -666,7 +638,7 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
                         if (photoOptions.duration > 0 &&
                                 videoInfo.duration > photoOptions.duration + 500) {
                             Toast.makeText(TakePhotoActivity.this,
-                                    "你选择的视频时长超出限制",
+                                    "您选择的视频时长超出限制",
                                     Toast.LENGTH_SHORT).show();
                             mCbCheck.setChecked(false);
                             return;
@@ -674,7 +646,7 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
                         if (photoOptions.size > 0 &&
                                 videoInfo.size > photoOptions.size) {
                             Toast.makeText(TakePhotoActivity.this,
-                                    "你选择的视频大小超出限制",
+                                    "您选择的视频大小超出限制",
                                     Toast.LENGTH_SHORT).show();
                             mCbCheck.setChecked(false);
                             return;

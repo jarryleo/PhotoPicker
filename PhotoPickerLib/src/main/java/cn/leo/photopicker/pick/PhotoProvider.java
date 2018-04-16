@@ -5,7 +5,6 @@ import android.content.ContentResolver;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.MediaStore;
-import android.support.v7.widget.ViewUtils;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -13,6 +12,8 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
+
+import cn.leo.photopicker.utils.VideoUtil;
 
 /**
  * Created by JarryLeo on 2017/5/20.
