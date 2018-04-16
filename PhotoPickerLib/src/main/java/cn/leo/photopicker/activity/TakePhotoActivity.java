@@ -1,6 +1,5 @@
 package cn.leo.photopicker.activity;
 
-import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -14,7 +13,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.provider.MediaStore;
-import android.support.v4.app.ActivityOptionsCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
@@ -51,12 +49,16 @@ import cn.leo.photopicker.pick.MediaStoreContentObserver;
 import cn.leo.photopicker.pick.PhotoFolderPopupWindow;
 import cn.leo.photopicker.pick.PhotoOptions;
 import cn.leo.photopicker.pick.PhotoPicker;
+import cn.leo.photopicker.pick.PhotoPickerFileProvider;
 import cn.leo.photopicker.pick.PhotoProvider;
 import cn.leo.photopicker.utils.PermissionUtil;
 import cn.leo.photopicker.utils.ToastUtil;
 import cn.leo.photopicker.utils.VideoUtil;
+import cn.leo.photopicker.view.TransitionElement;
 
 public class TakePhotoActivity extends AppCompatActivity implements View.OnClickListener, AdapterView.OnItemClickListener {
+    public static final int REQUEST_CLIP = 0x03;
+    public static final int REQUEST_CHECK = 0x04;
     private ImageView mIvBack;
     private TextView mTvTitle;
     private ImageView mIvArrow;
@@ -79,10 +81,6 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
     protected void onCreate(Bundle savedInstanceState) {
         initStatusBar();
         super.onCreate(savedInstanceState);
-        //getWindow().requestFeature(Window.FEATURE_NO_TITLE);
-        /*if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            getWindow().requestFeature(Window.FEATURE_CONTENT_TRANSITIONS);
-        }*/
         if (savedInstanceState != null) {
             PhotoOptions options = savedInstanceState.getParcelable("options");
             if (options != null) {
@@ -95,6 +93,9 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
         initPermission();
     }
 
+    /**
+     * 沉浸式状态栏
+     */
     private void initStatusBar() {
         Window win = getWindow();
         //KITKAT也能满足，只是SYSTEM_UI_FLAG_LIGHT_STATUS_BAR（状态栏字体颜色反转）只有在6.0才有效
@@ -137,8 +138,7 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
      */
     private void initCameraPermission() {
         PermissionUtil.getInstance(this)
-                .request(PermissionUtil.permission.CAMERA,
-                        PermissionUtil.permission.WRITE_EXTERNAL_STORAGE)
+                .request(PermissionUtil.permission.CAMERA)
                 .execute(new PermissionUtil.Result() {
                     @Override
                     public void onSuccess() {
@@ -158,12 +158,6 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
      * @param context
      * @param options
      */
-    public static void startSelect(Activity context, PhotoOptions options,
-                                   PhotoPicker.PhotoCallBack callBack) {
-        photoOptions = options;
-        picCallBack = callBack;
-        context.startActivity(new Intent(context, TakePhotoActivity.class));
-    }
 
     public static void startSelect(Fragment context, PhotoOptions options) {
         photoOptions = options;
@@ -416,7 +410,9 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                     intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                     Uri contentUri = FileProvider.getUriForFile(this,
-                            getPackageName() + ".PhotoPickerFileProvider", file);
+                            getPackageName() + "." +
+                                    PhotoPickerFileProvider.class.getSimpleName(),
+                            file);
                     intent.setDataAndType(contentUri, "video/mp4");
                 } else {
                     uri = Uri.fromFile(file);
@@ -426,7 +422,7 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
                 try {
                     startActivity(intent);
                 } catch (Exception e) {
-                    Toast.makeText(this, "没有默认播放器,无法预览", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "没有默认播放器,无法预览视频", Toast.LENGTH_SHORT).show();
                 }
                 return;
             }
@@ -437,24 +433,19 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
             pathList.add(path);
             //照片预览
             Intent intent = new Intent(this, PhotoShowActivity.class);
+            intent.putExtra("check", mSelectPhotos.contains(path)); //传递选中
             intent.putStringArrayListExtra("images", pathList); //预览一张
             //预览所有
             //intent.putExtra(EXTRA_STARTING_ALBUM_POSITION, position - 1);
             //intent.putStringArrayListExtra("images", mAllPhotos);
-
             //共享动画
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                startActivity(intent, ActivityOptionsCompat.makeSceneTransitionAnimation(this,
-                        view, path).toBundle());
-            } else {
-                startActivity(intent);
-            }
+            TransitionElement.transitionStart(this, intent, view, path, REQUEST_CHECK);
         }
     }
 
 
     /**
-     * 开启相机拍照
+     * 开启相机拍照/录像
      */
     private void toOpenCamera() {
         // 判断是否挂载了SD卡
@@ -470,7 +461,7 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
 
         // 没有挂载SD卡，无法保存文件
         if (TextUtils.isEmpty(savePath)) {
-            Toast.makeText(this, "无法保存照片，请检查SD卡是否挂载", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "无法保存图像，请检查SD卡是否挂载", Toast.LENGTH_LONG).show();
             return;
         }
         if (photoOptions.type == PhotoOptions.TYPE_PHOTO) {
@@ -485,7 +476,7 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
         Intent intent = new Intent();
         Uri uri;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            String provider = getPackageName() + ".PhotoPickerFileProvider";
+            String provider = getPackageName() + "." + PhotoPickerFileProvider.class.getSimpleName();
             uri = FileProvider.getUriForFile(this, provider, out);
         } else {
             uri = Uri.fromFile(out);
@@ -505,14 +496,14 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
             intent.setAction(MediaStore.ACTION_IMAGE_CAPTURE);
         }
         intent.putExtra(MediaStore.EXTRA_OUTPUT, uri);
-        startActivityForResult(intent, 0x03);
+        startActivityForResult(intent, REQUEST_CLIP);
     }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (resultCode == AppCompatActivity.RESULT_OK) {
+        if (resultCode == RESULT_OK) {
             switch (requestCode) {
-                case 0x03:
+                case REQUEST_CLIP:
                     if (mCamImageName == null) return;
                     //刷新显示
                     String path = CropUtil.getCameraPath() + mCamImageName;
@@ -522,15 +513,18 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
                     MediaScannerConnection.scanFile(this, new String[]{path}, null, null);
                     //需要裁剪
                     if (photoOptions.crop && photoOptions.takeNum < 2) {
-                        CropActivity.startSelect(this, path, photoOptions/*, picCallBack*/);
-                        //finish();
+                        CropActivity.startSelect(this, path, photoOptions);
                     }
                     break;
-                case 0x04:
-                    if (data == null) return;
+                case REQUEST_CHECK:
+                    boolean check = data.getBooleanExtra("check", false);
                     String path1 = data.getStringExtra("path");
-                    mHandler.obtainMessage(0, new String[]{path1}).sendToTarget();
-                    break;
+                    if (check) {
+                        mSelectPhotos.add(path1);
+                    } else {
+                        mSelectPhotos.remove(path1);
+                    }
+                    mAdapter.notifyDataSetChanged();
             }
         }
     }
@@ -583,7 +577,7 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
             TextView mTvDuration;
             String mPath;
 
-            public ViewHolder(View itemView) {
+            ViewHolder(View itemView) {
                 this.itemView = itemView;
                 int screenWidth = CropUtil.getScreenWidth(itemView.getContext());
                 int itemSize = (int) ((screenWidth - CropUtil.dip2Px(itemView.getContext(), 4) + 0.5f) / 3);

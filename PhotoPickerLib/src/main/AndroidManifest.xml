@@ -27,13 +27,10 @@
 
         <activity
             android:name=".activity.CropActivity"
-            android:label="@string/title_activity_crop"
-            android:theme="@style/PhotoPickerTheme">
-        </activity>
+            android:theme="@style/PhotoPickerTheme"/>
         <activity
             android:name=".activity.PhotoShowActivity"
-            android:theme="@style/PhotoPickerTheme">
-        </activity>
+            android:theme="@style/PhotoPickerTheme"/>
     </application>
 
 </manifest>

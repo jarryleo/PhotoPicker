@@ -29,13 +29,9 @@ public class PhotoShowActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                WindowManager.LayoutParams.FLAG_FULLSCREEN);
         super.onCreate(savedInstanceState);
-        /*getWindow().requestFeature(Window.FEATURE_NO_TITLE);
-        getWindow().requestFeature(Window.FEATURE_CONTENT_TRANSITIONS);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            getWindow().setAllowEnterTransitionOverlap(true);
-        }*/
         setContentView(R.layout.activity_photo_show);
         mStartingPosition = getIntent().getIntExtra(EXTRA_STARTING_ALBUM_POSITION, 0);
         if (savedInstanceState == null) {

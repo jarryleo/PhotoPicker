@@ -28,7 +28,6 @@ public class PhotoFolderPopupWindow extends PopupWindow implements
         View.OnAttachStateChangeListener, AdapterView.OnItemClickListener {
     private ListView mFolderView;
     private Callback mCallback;
-    private FolderAdapter mFolderAdapter;
     private ArrayList<String> mFolders;
     private HashMap<String, ArrayList<String>> mAllFile;
 
@@ -61,8 +60,8 @@ public class PhotoFolderPopupWindow extends PopupWindow implements
     public void setAdapter(HashMap<String, ArrayList<String>> folders) {
         mAllFile = folders;
         mFolders = PhotoProvider.getDirList(folders);
-        mFolderAdapter = new FolderAdapter();
-        mFolderView.setAdapter(mFolderAdapter);
+        FolderAdapter folderAdapter = new FolderAdapter();
+        mFolderView.setAdapter(folderAdapter);
         mFolderView.setOnItemClickListener(this);
     }
 
@@ -138,7 +137,7 @@ public class PhotoFolderPopupWindow extends PopupWindow implements
         ImageView iv_image;
         TextView tv_name, tv_size;
 
-        public ViewHolder(View itemView) {
+        ViewHolder(View itemView) {
             this.itemView = itemView;
             itemView.setTag(this);
             iv_image = (ImageView) itemView.findViewById(R.id.iv_folder);

@@ -21,12 +21,10 @@ import cn.leo.photopicker.crop.CropLayout;
 import cn.leo.photopicker.crop.CropUtil;
 import cn.leo.photopicker.crop.ZoomImageView;
 import cn.leo.photopicker.pick.PhotoOptions;
-import cn.leo.photopicker.pick.PhotoPicker;
 
 public class CropActivity extends Activity implements View.OnClickListener {
 
     private static PhotoOptions photoOptions;
-    //private static PhotoPicker.PhotoCallBack picCallBack;
     private CropLayout mGl;
     private Button btn1;
     private Button btn2;
@@ -53,7 +51,7 @@ public class CropActivity extends Activity implements View.OnClickListener {
                                    PhotoOptions options) {
         mUrl = url;
         photoOptions = options;
-        context.startActivityForResult(new Intent(context, CropActivity.class), 0x04);
+        context.startActivityForResult(new Intent(context, CropActivity.class), TakePhotoActivity.REQUEST_CLIP);
     }
 
     private void initView() {
@@ -82,7 +80,6 @@ public class CropActivity extends Activity implements View.OnClickListener {
                 data.putExtra("path", path);
                 setResult(RESULT_OK, data);
                 finish();
-                //picCallBack.onPicSelected(new String[]{path});
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             } finally {

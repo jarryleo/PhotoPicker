@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 
+import cn.leo.photopicker.pick.FragmentCallback;
 import cn.leo.photopicker.pick.PhotoPicker;
 
 public class MainActivity extends AppCompatActivity implements PhotoLoader.OnPhotoLoadFinishListener {

@@ -16,7 +16,7 @@ public class TransitionElement {
     public static int TRANSITION_REQUEST_CODE = 100;
 
 
-    public static void transitonStart(Activity srcActivity, Class<?> destClass, View srcView, String sharedElementName) {
+    public static void transitionStart(Activity srcActivity, Class<?> destClass, View srcView, String sharedElementName) {
         ActivityOptionsCompat optionsCompat = ActivityOptionsCompat
                 .makeSceneTransitionAnimation(srcActivity, srcView, sharedElementName);
         Bundle bundle = optionsCompat.toBundle();
@@ -28,7 +28,7 @@ public class TransitionElement {
         }
     }
 
-    public static void transitonStart(Activity srcActivity, Intent intent, View srcView, String sharedElementName) {
+    public static void transitionStart(Activity srcActivity, Intent intent, View srcView, String sharedElementName) {
         ActivityOptionsCompat optionsCompat = ActivityOptionsCompat
                 .makeSceneTransitionAnimation(srcActivity, srcView, sharedElementName);
         Bundle bundle = optionsCompat.toBundle();
@@ -39,7 +39,18 @@ public class TransitionElement {
         }
     }
 
-    public static void transitonStart(Activity srcActivity, Intent intent, Pair<View, String>... sharedElements) {
+    public static void transitionStart(Activity srcActivity, Intent intent, View srcView, String sharedElementName, int requestCode) {
+        ActivityOptionsCompat optionsCompat = ActivityOptionsCompat
+                .makeSceneTransitionAnimation(srcActivity, srcView, sharedElementName);
+        Bundle bundle = optionsCompat.toBundle();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            srcActivity.startActivityForResult(intent, requestCode, bundle);
+        } else {
+            srcActivity.startActivityForResult(intent, requestCode);
+        }
+    }
+
+    public static void transitionStart(Activity srcActivity, Intent intent, Pair<View, String>... sharedElements) {
         ActivityOptionsCompat optionsCompat = ActivityOptionsCompat
                 .makeSceneTransitionAnimation(srcActivity, sharedElements);
         Bundle bundle = optionsCompat.toBundle();
