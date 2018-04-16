@@ -520,11 +520,17 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
                     boolean check = data.getBooleanExtra("check", false);
                     String path1 = data.getStringExtra("path");
                     if (check) {
-                        mSelectPhotos.add(path1);
+                        if (!mSelectPhotos.contains(path1)) {
+                            mSelectPhotos.add(path1);
+                            mAdapter.notifyDataSetChanged();
+                        }
                     } else {
-                        mSelectPhotos.remove(path1);
+                        if (mSelectPhotos.contains(path1)) {
+                            mSelectPhotos.remove(path1);
+                            mAdapter.notifyDataSetChanged();
+                        }
                     }
-                    mAdapter.notifyDataSetChanged();
+
             }
         }
     }
