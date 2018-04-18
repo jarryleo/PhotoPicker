@@ -51,8 +51,31 @@ public class FragmentCallback extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        startTake();
+    }
+
+    public void startTake() {
         if (mOptions != null) {
             TakePhotoActivity.startSelect(this, mOptions);
         }
     }
+
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        outState.putParcelable("options", mOptions);
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    public void onViewStateRestored(@Nullable Bundle savedInstanceState) {
+        super.onViewStateRestored(savedInstanceState);
+        if (savedInstanceState != null) {
+            PhotoOptions options = savedInstanceState.getParcelable("options");
+            if (options != null) {
+                mOptions = options;
+            }
+        }
+    }
+
 }

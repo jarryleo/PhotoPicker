@@ -1,5 +1,6 @@
 package cn.leo.photopicker.activity;
 
+import android.annotation.TargetApi;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -15,13 +16,13 @@ import android.os.Message;
 import android.provider.MediaStore;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.FileProvider;
-import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.AdapterView;
-import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
@@ -48,17 +49,18 @@ import cn.leo.photopicker.pick.PhotoOptions;
 import cn.leo.photopicker.pick.PhotoPickerFileProvider;
 import cn.leo.photopicker.pick.PhotoProvider;
 import cn.leo.photopicker.utils.PermissionUtil;
+import cn.leo.photopicker.utils.PositionUtil;
 import cn.leo.photopicker.utils.ToastUtil;
 import cn.leo.photopicker.view.TransitionElement;
 
-public class TakePhotoActivity extends AppCompatActivity implements View.OnClickListener, AdapterView.OnItemClickListener, PhotoListAdapter.OnSelectChangeListener {
+public class TakePhotoActivity extends TransitionAnimActivity implements View.OnClickListener, PhotoListAdapter.OnSelectChangeListener {
     private static final String EXTRA_STARTING_ALBUM_POSITION = "extra_starting_item_position";
     public static final int REQUEST_CLIP = 0x03;
     public static final int REQUEST_CHECK = 0x04;
     private ImageView mIvBack;
     private TextView mTvTitle;
     private ImageView mIvArrow;
-    private GridView mGvPhotos;
+    private RecyclerView mRvPhotos;
     private RelativeLayout mRlBar;
     private HashMap<String, ArrayList<PhotoBean>> mDiskPhotos;
     private PhotoListAdapter mAdapter;
@@ -158,7 +160,7 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
 
     private void initData() {
         mAdapter = new PhotoListAdapter(photoOptions, this);
-        mGvPhotos.setAdapter(mAdapter);
+        mRvPhotos.setAdapter(mAdapter);
         refreshData();
         mMediaStoreContentObserver = new MediaStoreContentObserver(this, new Handler());
         Uri imageUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
@@ -219,9 +221,14 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
         mIvBack = findViewById(R.id.photo_picker_iv_back);
         mIvArrow = findViewById(R.id.photo_picker_iv_arrow);
         mTvTitle = findViewById(R.id.photo_picker_tv_title);
-        mGvPhotos = findViewById(R.id.photo_picker_gv_photos);
-        mLlTitleContainer = findViewById(R.id.photo_picker_ll_titlecontainer);
         mBtnComplete = findViewById(R.id.tv_btn_complete);
+        mLlTitleContainer = findViewById(R.id.photo_picker_ll_titlecontainer);
+        initButtonText();
+        mRvPhotos = findViewById(R.id.rv_photos);
+        mRvPhotos.setLayoutManager(new GridLayoutManager(this, 3));
+    }
+
+    private void initButtonText() {
         if (photoOptions != null) {
             String text = "完成(0/" + photoOptions.takeNum + ")";
             if (photoOptions.crop || photoOptions.takeNum < 2) {
@@ -234,7 +241,6 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
     private void initEvent() {
         mIvBack.setOnClickListener(this);
         mBtnComplete.setOnClickListener(this);
-        mGvPhotos.setOnItemClickListener(this);
         mLlTitleContainer.setOnClickListener(this);
     }
 
@@ -390,7 +396,7 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
 
     //图片点击事件
     @Override
-    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+    public void onItemClick(View view, int position) {
         if (position == 0) {
             //打开相机拍照，并返回相片
             initCameraPermission();
@@ -420,7 +426,7 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
                 }
                 return;
             }
-
+            PositionUtil.pohotoPosition = position;
             //点击一张照片
             String path = mAdapter.getPhoto(position - 1).path;
             ArrayList<String> pathList = new ArrayList<>();
@@ -435,10 +441,20 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
             intent.putStringArrayListExtra("check", mAdapter.getSelectPhotos());
             intent.putExtra("max", photoOptions.takeNum);
             //共享动画
-            TransitionElement.transitionStart(this, intent, view, path, REQUEST_CHECK);
+            TransitionElement.transitionStart(this, intent, view, "share", REQUEST_CHECK);
         }
     }
 
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    @Override
+    public View getItemByPosition(int currentPosition) {
+        mRvPhotos.scrollToPosition(currentPosition);
+        RecyclerView.ViewHolder viewHolder = mRvPhotos.findViewHolderForAdapterPosition(currentPosition);
+        if (viewHolder == null) {
+            return mRvPhotos;
+        }
+        return viewHolder.itemView;
+    }
 
     /**
      * 开启相机拍照/录像
@@ -542,7 +558,7 @@ public class TakePhotoActivity extends AppCompatActivity implements View.OnClick
     @Override
     protected void onRestart() {
         super.onRestart();
-        if (mAdapter.getCount() == 1) {
+        if (mAdapter.getItemCount() == 1) {
             initPermission();
         }
     }

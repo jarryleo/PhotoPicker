@@ -23,8 +23,10 @@ import cn.leo.photopicker.utils.ToastUtil;
  * Created by Leo on 2018/4/16.
  */
 
-public class PhotoListHolder implements CompoundButton.OnCheckedChangeListener {
-    public View itemView;
+public class PhotoListHolder extends
+        BaseRVHolder<PhotoBean>
+        implements
+        CompoundButton.OnCheckedChangeListener, View.OnClickListener {
     private ImageView mIvPhoto;
     private CheckBox mCbCheck;
     private TextView mTvDuration;
@@ -32,9 +34,11 @@ public class PhotoListHolder implements CompoundButton.OnCheckedChangeListener {
     private ArrayList<String> mSelectPhotos;
     private PhotoOptions mPhotoOptions;
     private PhotoListAdapter mPhotoListAdapter;
+    private OnItemClickListener mOnItemClickListener;
+
 
     public PhotoListHolder(View itemView) {
-        this.itemView = itemView;
+        super(itemView);
         int screenWidth = CropUtil.getScreenWidth(itemView.getContext());
         int itemSize = (int) ((screenWidth - CropUtil.dip2Px(itemView.getContext(), 4) + 0.5f) / 3);
         ViewGroup.LayoutParams params = itemView.getLayoutParams();
@@ -48,6 +52,11 @@ public class PhotoListHolder implements CompoundButton.OnCheckedChangeListener {
         mCbCheck.setOnCheckedChangeListener(this);
     }
 
+    @Override
+    public void setData(PhotoBean photoBean, int position) {
+
+    }
+
     public void setData(PhotoBean photoBean,
                         ArrayList<String> selectPhotos,
                         PhotoOptions photoOptions,
@@ -58,7 +67,7 @@ public class PhotoListHolder implements CompoundButton.OnCheckedChangeListener {
         mPhotoListAdapter = photoListAdapter;
         mCbCheck.setChecked(selectPhotos.contains(photoBean.path)); //勾选框复用问题
         mCbCheck.setVisibility(View.VISIBLE);
-        Glide.with(itemView.getContext())
+        Glide.with(mContext)
                 .load(photoBean.path)
                 .crossFade()
                 .centerCrop()
@@ -75,6 +84,8 @@ public class PhotoListHolder implements CompoundButton.OnCheckedChangeListener {
         } else {
             mTvDuration.setVisibility(View.GONE);
         }
+
+        itemView.setOnClickListener(this);
     }
 
     public void setCameraPic() {
@@ -122,11 +133,21 @@ public class PhotoListHolder implements CompoundButton.OnCheckedChangeListener {
         } else {
             mSelectPhotos.remove(mPhotoBean.path);
         }
-        /*String text = "完成(" + mSelectPhotos.size() + "/" + mPhotoOptions.takeNum + ")";
-        if (mPhotoOptions.crop || mPhotoOptions.takeNum < 2) {
-            text = "完成";
-        }*/
-        //mBtnComplete.setText(text);
         mPhotoListAdapter.onSelectChanged();
+    }
+
+    public void setOnItemClickListener(OnItemClickListener listener) {
+        mOnItemClickListener = listener;
+    }
+
+    @Override
+    public void onClick(View v) {
+        if (mOnItemClickListener != null) {
+            mOnItemClickListener.onItemOnClick(itemView, getAdapterPosition());
+        }
+    }
+
+    public interface OnItemClickListener {
+        void onItemOnClick(View view, int position);
     }
 }

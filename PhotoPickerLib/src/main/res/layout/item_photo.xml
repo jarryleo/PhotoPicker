@@ -3,9 +3,9 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="90dp"
     android:layout_height="90dp"
-    android:background="#22000000"
     android:descendantFocusability="blocksDescendants"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:padding="1dp">
 
     <ImageView
         android:id="@+id/item_iv_photo"
@@ -17,7 +17,8 @@
         android:id="@+id/item_cb_check"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentRight="true"/>
+        android:layout_alignParentRight="true"
+        android:theme="@style/PhotoPicker_CheckBox"/>
 
     <TextView
         android:id="@+id/tv_video_duration"

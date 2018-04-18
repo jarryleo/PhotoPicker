@@ -8,6 +8,9 @@
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
-    <style name="PhotoPicker_CheckBox" parent="PhotoPickerTheme">
+    <style name="PhotoPicker_CheckBox" parent="@android:style/Widget.Material.CompoundButton.CheckBox">
+        <item name="android:colorControlActivated">@color/colorAccent</item>
+        <item name="android:colorControlNormal">@color/colorPrimaryDark</item>
     </style>
+
 </resources>

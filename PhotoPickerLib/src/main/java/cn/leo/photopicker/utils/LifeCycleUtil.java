@@ -1,5 +1,6 @@
 package cn.leo.photopicker.utils;
 
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 
@@ -17,7 +18,11 @@ public class LifeCycleUtil {
                                             PhotoPicker.PhotoCallBack callBack) {
         String tag = "fragmentCallBack";
         FragmentManager fragmentManager = activity.getSupportFragmentManager();
-        if (fragmentManager.findFragmentByTag(tag) != null) {
+        Fragment fragmentByTag = fragmentManager.findFragmentByTag(tag);
+        if (fragmentByTag != null) {
+            if (fragmentByTag instanceof FragmentCallback) {
+                ((FragmentCallback) fragmentByTag).startTake();
+            }
             return;
         }
         FragmentCallback fragment = new FragmentCallback();

@@ -26,5 +26,6 @@
         android:shadowRadius="1"
         android:text="选择"
         android:textColor="@android:color/white"
-        android:textSize="18dp"/>
+        android:textSize="18dp"
+        android:theme="@style/PhotoPicker_CheckBox"/>
 </RelativeLayout>

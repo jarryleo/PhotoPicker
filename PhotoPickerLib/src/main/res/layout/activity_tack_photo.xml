@@ -54,8 +54,8 @@
             android:layout_centerVertical="true"
             android:layout_marginRight="8dp"
             android:background="@drawable/selector_btn_complete"
-            android:minWidth="60dp"
             android:gravity="center"
+            android:minWidth="60dp"
             android:paddingBottom="6dp"
             android:paddingLeft="10dp"
             android:paddingRight="10dp"
@@ -64,11 +64,8 @@
             android:textColor="@android:color/white"/>
     </RelativeLayout>
 
-    <GridView
-        android:id="@+id/photo_picker_gv_photos"
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/rv_photos"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:horizontalSpacing="2dp"
-        android:numColumns="3"
-        android:verticalSpacing="2dp"/>
+        android:layout_height="match_parent"/>
 </LinearLayout>

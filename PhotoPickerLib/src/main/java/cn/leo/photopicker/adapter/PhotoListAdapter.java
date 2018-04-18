@@ -1,14 +1,15 @@
 package cn.leo.photopicker.adapter;
 
+import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.BaseAdapter;
 
 import java.util.ArrayList;
 
 import cn.leo.photopicker.R;
 import cn.leo.photopicker.bean.PhotoBean;
+import cn.leo.photopicker.holder.BaseRVHolder;
 import cn.leo.photopicker.holder.PhotoListHolder;
 import cn.leo.photopicker.pick.PhotoOptions;
 
@@ -16,8 +17,7 @@ import cn.leo.photopicker.pick.PhotoOptions;
  * Created by Leo on 2018/4/16.
  */
 
-public class PhotoListAdapter extends BaseAdapter {
-    private ArrayList<PhotoBean> mAllPhotos = new ArrayList<>();
+public class PhotoListAdapter extends BaseRVAdapter<PhotoBean> implements PhotoListHolder.OnItemClickListener {
     private ArrayList<String> mSelectPhotos = new ArrayList<>();
     private PhotoOptions mPhotoOptions;
     private OnSelectChangeListener mOnSelectChangeListener;
@@ -28,14 +28,8 @@ public class PhotoListAdapter extends BaseAdapter {
         mOnSelectChangeListener = onSelectChangeListener;
     }
 
-    public void setData(ArrayList<PhotoBean> allPhotos) {
-        mAllPhotos.clear();
-        mAllPhotos.addAll(allPhotos);
-        notifyDataSetChanged();
-    }
-
     public void add(int index, PhotoBean bean) {
-        mAllPhotos.add(index, bean);
+        mList.add(index, bean);
         notifyDataSetChanged();
     }
 
@@ -44,31 +38,17 @@ public class PhotoListAdapter extends BaseAdapter {
     }
 
     @Override
-    public int getCount() {
-        if (mAllPhotos != null) {
-            return mAllPhotos.size() + 1;
-        }
-        return 0;
-    }
-
-    @Override
-    public Object getItem(int position) {
-        if (mAllPhotos != null) {
-            return mAllPhotos.get(position);
-        }
-        return null;
+    public int getItemCount() {
+        return mList.size() + 1;
     }
 
     public PhotoBean getPhoto(int position) {
-        if (mAllPhotos != null) {
-            return mAllPhotos.get(position);
-        }
-        return null;
+        return mList.get(position);
     }
 
     public ArrayList<String> getAllPhotoPaths() {
         ArrayList<String> list = new ArrayList<>();
-        for (PhotoBean allPhoto : mAllPhotos) {
+        for (PhotoBean allPhoto : mList) {
             list.add(allPhoto.path);
         }
         return list;
@@ -79,21 +59,23 @@ public class PhotoListAdapter extends BaseAdapter {
         return position;
     }
 
+
     @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
-        PhotoListHolder holder;
-        if (convertView == null) {
-            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_photo, parent, false);
-            holder = new PhotoListHolder(view);
-        } else {
-            holder = (PhotoListHolder) convertView.getTag();
-        }
+    protected BaseRVHolder getViewHolder(ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_photo, parent, false);
+        return new PhotoListHolder(view);
+    }
+
+
+    @Override
+    public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
+        PhotoListHolder photoListHolder = (PhotoListHolder) holder;
         if (position == 0) {
-            holder.setCameraPic();
+            photoListHolder.setCameraPic();
         } else {
-            holder.setData(mAllPhotos.get(position - 1), mSelectPhotos, mPhotoOptions, this);
+            photoListHolder.setData(mList.get(position - 1), mSelectPhotos, mPhotoOptions, this);
         }
-        return holder.itemView;
+        photoListHolder.setOnItemClickListener(this);
     }
 
     public void onSelectChanged() {
@@ -102,9 +84,18 @@ public class PhotoListAdapter extends BaseAdapter {
         }
     }
 
+    @Override
+    public void onItemOnClick(View view, int position) {
+        if (mOnSelectChangeListener != null) {
+            mOnSelectChangeListener.onItemClick(view, position);
+        }
+    }
+
     public interface OnSelectChangeListener {
 
         void onSelectChange(ArrayList<String> selectPhotos);
+
+        void onItemClick(View view, int position);
 
     }
 }

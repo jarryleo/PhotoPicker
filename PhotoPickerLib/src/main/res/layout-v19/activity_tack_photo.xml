@@ -69,11 +69,8 @@
             android:textColor="@android:color/white"/>
     </RelativeLayout>
 
-    <GridView
-        android:id="@+id/photo_picker_gv_photos"
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/rv_photos"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:horizontalSpacing="2dp"
-        android:numColumns="3"
-        android:verticalSpacing="2dp"/>
+        android:layout_height="match_parent"/>
 </LinearLayout>

@@ -16,6 +16,7 @@ import com.bumptech.glide.Glide;
 import java.util.ArrayList;
 
 import cn.leo.photopicker.R;
+import cn.leo.photopicker.utils.PositionUtil;
 import cn.leo.photopicker.utils.ToastUtil;
 import cn.leo.photopicker.view.BannerView;
 
@@ -52,15 +53,17 @@ public class PhotoShowActivity extends Activity {
         //boolean check = intent.getBooleanExtra("check", false);
         mImages = intent.getStringArrayListExtra("images");
         mChecks = intent.getStringArrayListExtra("check");
-        mCurrentPosition = intent.getIntExtra(EXTRA_STARTING_ALBUM_POSITION, 0);
         mMax = intent.getIntExtra("max", 0);
+        mCurrentPosition = intent.getIntExtra(EXTRA_STARTING_ALBUM_POSITION, 0);
+        mBannerView = findViewById(R.id.carouselView);
+        //设置共享名称
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && mImages != null) {
+            //mBannerView.setTransitionName(mImages.get(mCurrentPosition));
+            mBannerView.setTransitionName("share");
+        }
         mCheckBox = findViewById(R.id.cb_check);
         mCheckBox.setChecked(mChecks.contains(mImages.get(mCurrentPosition)));
-        mBannerView = findViewById(R.id.carouselView);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && mImages != null) {
-            mBannerView.setTransitionName(mImages.get(mCurrentPosition));
-        }
         mBannerView.initImageLoader(new BannerView.ImageLoader() {
             @Override
             public void loadImage(ImageView imageView, String imagePath) {
@@ -70,7 +73,6 @@ public class PhotoShowActivity extends Activity {
                         .into(imageView);
             }
         });
-
         mBannerView.setImageList(mImages, mImages.size() > 1);
         mBannerView.setCurrentItem(mCurrentPosition);
         mBannerView.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
@@ -107,6 +109,7 @@ public class PhotoShowActivity extends Activity {
 
     @Override
     public void finishAfterTransition() {
+        PositionUtil.pohotoPosition = mCurrentPosition + 1;
         Intent data = new Intent();
         data.putExtra(EXTRA_STARTING_ALBUM_POSITION, mStartingPosition);
         data.putExtra(EXTRA_CURRENT_ALBUM_POSITION, mCurrentPosition);

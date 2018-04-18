@@ -90,8 +90,8 @@ public class BannerView extends FrameLayout implements ViewPager.OnPageChangeLis
 
     public void setCurrentItem(int currentItem) {
         if (mViewPager == null) return;
-        if (currentItem < 50000 && mInfiniteMode) {
-            currentItem += 50000;
+        if (currentItem < mImageList.size() * 50000 && mInfiniteMode) {
+            currentItem += mImageList.size() * 50000;
         }
         mCurrentItem = currentItem;
         mViewPager.setCurrentItem(mCurrentItem);
