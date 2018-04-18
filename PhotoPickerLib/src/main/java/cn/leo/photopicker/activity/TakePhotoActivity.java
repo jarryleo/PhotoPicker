@@ -69,6 +69,8 @@ public class TakePhotoActivity extends TransitionAnimActivity implements View.On
     private TextView mBtnComplete;
     private LinearLayout mLlTitleContainer;
     private MediaStoreContentObserver mMediaStoreContentObserver;
+    private View mViewTop;
+    private View mViewBottom;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -217,6 +219,8 @@ public class TakePhotoActivity extends TransitionAnimActivity implements View.On
 
 
     private void initView() {
+        mViewTop = findViewById(R.id.viewTop);
+        mViewBottom = findViewById(R.id.viewBottom);
         mRlBar = findViewById(R.id.photo_picker_rl_bar);
         mIvBack = findViewById(R.id.photo_picker_iv_back);
         mIvArrow = findViewById(R.id.photo_picker_iv_arrow);
@@ -447,10 +451,18 @@ public class TakePhotoActivity extends TransitionAnimActivity implements View.On
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     @Override
     public View getItemByPosition(int currentPosition) {
-        mRvPhotos.scrollToPosition(currentPosition);
+        //mRvPhotos.scrollToPosition(currentPosition);
+        GridLayoutManager layoutManager = (GridLayoutManager) mRvPhotos.getLayoutManager();
+        int first = layoutManager.findFirstVisibleItemPosition();
+        int last = layoutManager.findLastVisibleItemPosition();
         RecyclerView.ViewHolder viewHolder = mRvPhotos.findViewHolderForAdapterPosition(currentPosition);
         if (viewHolder == null) {
-            return mRvPhotos;
+            if (currentPosition < first) {
+                return mViewTop;
+            } else if (currentPosition > last) {
+                return mViewBottom;
+            }
+            return mBtnComplete;
         }
         return viewHolder.itemView;
     }
