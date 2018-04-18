@@ -51,14 +51,16 @@ public class CropActivity extends Activity implements View.OnClickListener {
                                    PhotoOptions options) {
         mUrl = url;
         photoOptions = options;
-        context.startActivityForResult(new Intent(context, CropActivity.class), TakePhotoActivity.REQUEST_CLIP);
+        context.startActivityForResult(
+                new Intent(context, CropActivity.class),
+                TakePhotoActivity.REQUEST_CLIP);
     }
 
     private void initView() {
-        mGl = (CropLayout) findViewById(R.id.gl);
-        btn1 = (Button) findViewById(R.id.take_btn1);
-        btn2 = (Button) findViewById(R.id.take_btn2);
-        mIv = (ImageView) findViewById(R.id.take_iv);
+        mGl = findViewById(R.id.gl);
+        btn1 = findViewById(R.id.take_btn1);
+        btn2 = findViewById(R.id.take_btn2);
+        mIv = findViewById(R.id.take_iv);
     }
 
     private void initEvent() {

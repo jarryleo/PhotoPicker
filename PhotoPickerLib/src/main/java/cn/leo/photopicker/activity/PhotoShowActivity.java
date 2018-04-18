@@ -89,7 +89,7 @@ public class PhotoShowActivity extends Activity {
                 if (isChecked) {
                     if (mChecks.contains(e)) return;
                     if (mChecks.size() >= mMax) {
-                        ToastUtil.showToast(PhotoShowActivity.this, "您最多只能选择" + mMax + "个");
+                        ToastUtil.showToast(PhotoShowActivity.this, "您最多只能选择" + mMax + "张照片！");
                         mCheckBox.setChecked(false);
                     } else {
                         mChecks.add(e);

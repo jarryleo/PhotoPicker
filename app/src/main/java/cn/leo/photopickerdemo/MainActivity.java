@@ -42,7 +42,9 @@ public class MainActivity extends AppCompatActivity implements PhotoLoader.OnPho
 
     public void selectSinglePhotoCrop(View v) {
         //选择一张图片并裁剪
-        PhotoPicker.selectPhoto(this).crop(600, 600).take(new PhotoPicker.PhotoCallBack() {
+        PhotoPicker.selectPhoto(this)
+                .crop(600, 600)
+                .take(new PhotoPicker.PhotoCallBack() {
             @Override
             public void onPicSelected(String[] path) {
                 Glide.with(MainActivity.this)

@@ -50,6 +50,7 @@ public class PhotoListHolder extends
         mCbCheck = itemView.findViewById(R.id.item_cb_check);
         mTvDuration = itemView.findViewById(R.id.tv_video_duration);
         mCbCheck.setOnCheckedChangeListener(this);
+        itemView.setOnClickListener(this);
     }
 
     @Override
@@ -84,8 +85,6 @@ public class PhotoListHolder extends
         } else {
             mTvDuration.setVisibility(View.GONE);
         }
-
-        itemView.setOnClickListener(this);
     }
 
     public void setCameraPic() {

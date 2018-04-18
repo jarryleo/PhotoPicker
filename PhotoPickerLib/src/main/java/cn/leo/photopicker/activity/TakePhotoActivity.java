@@ -19,7 +19,6 @@ import android.support.v4.content.FileProvider;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -55,8 +54,9 @@ import cn.leo.photopicker.view.TransitionElement;
 
 public class TakePhotoActivity extends TransitionAnimActivity implements View.OnClickListener, PhotoListAdapter.OnSelectChangeListener {
     private static final String EXTRA_STARTING_ALBUM_POSITION = "extra_starting_item_position";
-    public static final int REQUEST_CLIP = 0x03;
-    public static final int REQUEST_CHECK = 0x04;
+    public static final int REQUEST_CAMERA = 1;
+    public static final int REQUEST_CHECK = 2;
+    public static final int REQUEST_CLIP = 3;
     private ImageView mIvBack;
     private TextView mTvTitle;
     private ImageView mIvArrow;
@@ -266,9 +266,8 @@ public class TakePhotoActivity extends TransitionAnimActivity implements View.On
         //单选并裁剪
         if (photoOptions.crop && photoOptions.takeNum < 2) {
             if (p.length == 1) {
-                CropActivity.startSelect(this, p[0], photoOptions/*, picCallBack*/);
+                CropActivity.startSelect(this, p[0], photoOptions);
             }
-            //finish();
         } else {
             //完成选择
             if (mAdapter.getSelectPhotos().size() > 0) {
@@ -428,9 +427,9 @@ public class TakePhotoActivity extends TransitionAnimActivity implements View.On
             }
             PositionUtil.pohotoPosition = position;
             //点击一张照片
-            String path = mAdapter.getPhoto(position - 1).path;
-            ArrayList<String> pathList = new ArrayList<>();
-            pathList.add(path);
+//            String path = mAdapter.getPhoto(position - 1).path;
+//            ArrayList<String> pathList = new ArrayList<>();
+//            pathList.add(path);
             //照片预览
             Intent intent = new Intent(this, PhotoShowActivity.class);
 //            intent.putExtra("check", mAdapter.getSelectPhotos().contains(path)); //传递选中
@@ -506,14 +505,14 @@ public class TakePhotoActivity extends TransitionAnimActivity implements View.On
             intent.setAction(MediaStore.ACTION_IMAGE_CAPTURE);
         }
         intent.putExtra(MediaStore.EXTRA_OUTPUT, uri);
-        startActivityForResult(intent, REQUEST_CLIP);
+        startActivityForResult(intent, REQUEST_CAMERA);
     }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (resultCode == RESULT_OK) {
             switch (requestCode) {
-                case REQUEST_CLIP:
+                case REQUEST_CAMERA:
                     if (mCamImageName == null) return;
                     //刷新显示
                     String path = CropUtil.getCameraPath() + mCamImageName;
@@ -534,6 +533,12 @@ public class TakePhotoActivity extends TransitionAnimActivity implements View.On
                     mAdapter.getSelectPhotos().addAll(checks);
                     mAdapter.notifyDataSetChanged();
                     onSelectChange(mAdapter.getSelectPhotos());
+                    break;
+                case REQUEST_CLIP:
+                    String cropPath = data.getStringExtra("path");
+                    String[] paths = new String[]{cropPath};
+                    mHandler.obtainMessage(0, paths).sendToTarget();
+                    break;
             }
         }
     }
