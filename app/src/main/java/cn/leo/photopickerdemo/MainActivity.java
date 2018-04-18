@@ -17,7 +17,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 
-import cn.leo.photopicker.pick.FragmentCallback;
 import cn.leo.photopicker.pick.PhotoPicker;
 
 public class MainActivity extends AppCompatActivity implements PhotoLoader.OnPhotoLoadFinishListener {
@@ -30,8 +29,8 @@ public class MainActivity extends AppCompatActivity implements PhotoLoader.OnPho
         super.onCreate(savedInstanceState);
         getWindow().requestFeature(Window.FEATURE_NO_TITLE);
         setContentView(cn.leo.photopicker.R.layout.activity_main);
-        mImageView = (ImageView) findViewById(cn.leo.photopicker.R.id.iv_img);
-        mLlContainer = (ImageShow) findViewById(cn.leo.photopicker.R.id.ll_container);
+        mImageView = findViewById(cn.leo.photopicker.R.id.iv_img);
+        mLlContainer = findViewById(cn.leo.photopicker.R.id.ll_container);
         mLlContainer.setOnImageClickListener(new ImageShow.OnImageClickListener() {
             @Override
             public void onClick(String tag, ImageView imageView) {
@@ -45,15 +44,15 @@ public class MainActivity extends AppCompatActivity implements PhotoLoader.OnPho
         PhotoPicker.selectPhoto(this)
                 .crop(600, 600)
                 .take(new PhotoPicker.PhotoCallBack() {
-            @Override
-            public void onPicSelected(String[] path) {
-                Glide.with(MainActivity.this)
-                        .load(path[0])
-                        .centerCrop()
-                        .into(mImageView);
-                Toast.makeText(MainActivity.this, "" + Arrays.toString(path), Toast.LENGTH_SHORT).show();
-            }
-        });
+                    @Override
+                    public void onPicSelected(String[] path) {
+                        Glide.with(MainActivity.this)
+                                .load(path[0])
+                                .centerCrop()
+                                .into(mImageView);
+                        Toast.makeText(MainActivity.this, "" + Arrays.toString(path), Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 
     public void selectSinglePhoto(View v) {
