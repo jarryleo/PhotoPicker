@@ -31,9 +31,12 @@ public class PhotoProvider {
         HashMap<String, ArrayList<PhotoBean>> allPic = new LinkedHashMap<>();
         Uri mImageUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
         ContentResolver mContentResolver = context.getContentResolver();
-        Cursor mCursor = mContentResolver.query(mImageUri, null, MediaStore.Images.Media.MIME_TYPE
-                        + " in ('image/jpeg','image/png','image/jpg') and " + MediaStore.Images.Media.SIZE + " >0 ",
-                null, MediaStore.Images.Media.DATE_ADDED + " desc");
+        Cursor mCursor = mContentResolver.query(mImageUri, null,
+                MediaStore.Images.Media.MIME_TYPE
+                        + " in ('image/jpeg','image/png','image/jpg') and "
+                        + MediaStore.Images.Media.SIZE + " >0 ",
+                null,
+                MediaStore.Images.Media.DATE_ADDED + " desc");
         if (mCursor != null) {
             while (mCursor.moveToNext()) {
                 // 获取图片的路径
@@ -68,13 +71,18 @@ public class PhotoProvider {
         HashMap<String, ArrayList<PhotoBean>> allPic = new LinkedHashMap<>();
         Uri mImageUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
         ContentResolver mContentResolver = context.getContentResolver();
-        Cursor cursor = mContentResolver.query(mImageUri, null, MediaStore.Video.Media.MIME_TYPE
-                        + " in ('video/mp4') and " + MediaStore.Video.Media.SIZE + " >0 ",
-                null, MediaStore.Video.Media.DATE_ADDED + " desc");
+        Cursor cursor = mContentResolver.query(
+                mImageUri,
+                null,
+                MediaStore.Video.Media.MIME_TYPE
+                        + " in ('video/mp4') and "
+                        + MediaStore.Video.Media.SIZE + " >0 ",
+                null,
+                MediaStore.Video.Media.DATE_ADDED + " desc");
         if (cursor != null) {
             while (cursor.moveToNext()) {
                 // 获取视频的路径
-                String path = cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.DATA));
+                String path = cursor.getString(cursor.getColumnIndex(MediaStore.Video.Media.DATA));
                 PhotoBean bean = new PhotoBean();
                 bean.path = path;
                 File picFile = new File(path);

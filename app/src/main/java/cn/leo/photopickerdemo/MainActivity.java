@@ -13,13 +13,11 @@ import com.bumptech.glide.load.resource.drawable.GlideDrawable;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 
 import cn.leo.photopicker.pick.PhotoPicker;
 
-public class MainActivity extends AppCompatActivity implements PhotoLoader.OnPhotoLoadFinishListener {
+public class MainActivity extends AppCompatActivity  {
 
     private ImageView mImageView;
     private ImageShow mLlContainer;
@@ -41,7 +39,7 @@ public class MainActivity extends AppCompatActivity implements PhotoLoader.OnPho
 
     public void selectSinglePhotoCrop(View v) {
         //选择一张图片并裁剪
-        PhotoPicker.selectPhoto(this)
+        PhotoPicker.takePhoto(this)
                 .crop(600, 600)
                 .take(new PhotoPicker.PhotoCallBack() {
                     @Override
@@ -57,9 +55,9 @@ public class MainActivity extends AppCompatActivity implements PhotoLoader.OnPho
 
     public void selectSinglePhoto(View v) {
         //选择一张图片不裁剪
-        PhotoPicker.selectPhoto(this)
-                .compress(50, 50)
-                .sizeLimit(10 * 1024)
+        PhotoPicker.takeVideo(this)
+                //.compress(50, 50)
+                //.sizeLimit(10 * 1024)
                 .take(new PhotoPicker.PhotoCallBack() {
                     @Override
                     public void onPicSelected(String[] path) {
@@ -74,7 +72,7 @@ public class MainActivity extends AppCompatActivity implements PhotoLoader.OnPho
 
     public void multiSelect(View v) {
         //选择多张图片
-        PhotoPicker.selectPhoto(this)
+        PhotoPicker.takePhoto(this)
                 .multi(3)
                 .sizeLimit(500 * 1024)
                 .compress(1080, 1920)
@@ -111,15 +109,5 @@ public class MainActivity extends AppCompatActivity implements PhotoLoader.OnPho
 
                     }
                 });
-    }
-
-
-    private void testLoader() {
-        getLoaderManager().initLoader(0, null, new PhotoLoader(this, this));
-    }
-
-    @Override
-    public void onPhotoLoadFinish(HashMap<String, ArrayList<String>> photos) {
-
     }
 }

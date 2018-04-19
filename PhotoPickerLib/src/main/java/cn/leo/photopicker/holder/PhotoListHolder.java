@@ -40,7 +40,7 @@ public class PhotoListHolder extends
     public PhotoListHolder(View itemView) {
         super(itemView);
         int screenWidth = CropUtil.getScreenWidth(itemView.getContext());
-        int itemSize = (int) ((screenWidth - CropUtil.dip2Px(itemView.getContext(), 4) + 0.5f) / 3);
+        int itemSize = screenWidth / 3;
         ViewGroup.LayoutParams params = itemView.getLayoutParams();
         params.height = itemSize;
         params.width = itemSize;
@@ -77,7 +77,8 @@ public class PhotoListHolder extends
             mTvDuration.setVisibility(View.VISIBLE);
             //读取时长和大小
             mTvDuration.setText(photoBean.getTime());
-            if (photoBean.duration > mPhotoOptions.duration + 500) {
+            if (mPhotoOptions.duration != 0 &&
+                    photoBean.duration > mPhotoOptions.duration + 500) {
                 mTvDuration.setTextColor(Color.RED);
             } else {
                 mTvDuration.setTextColor(Color.WHITE);

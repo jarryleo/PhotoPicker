@@ -1,4 +1,4 @@
-package cn.leo.photopickerdemo;
+package cn.leo.photopicker.loader;
 
 import android.app.LoaderManager;
 import android.content.Context;
@@ -13,22 +13,24 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 
+import cn.leo.photopicker.bean.PhotoBean;
+
 /**
  * Created by Leo on 2018/3/6.
  */
 
-public class PhotoLoader extends CursorLoader implements LoaderManager.LoaderCallbacks<Cursor> {
-    private OnPhotoLoadFinishListener mOnPhotoLoadFinishListener;
+public class VideoLoader extends CursorLoader implements LoaderManager.LoaderCallbacks<Cursor> {
+    private OnLoadFinishListener mOnPhotoLoadFinishListener;
 
-    public PhotoLoader(Context context, OnPhotoLoadFinishListener loadFinishListener) {
+    public VideoLoader(Context context, OnLoadFinishListener loadFinishListener) {
         super(context,
-                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
                 null,
-                MediaStore.Images.Media.MIME_TYPE
-                        + " in ('image/jpeg','image/png','image/jpg') and "
-                        + MediaStore.Images.Media.SIZE + " >0 ",
+                MediaStore.Video.Media.MIME_TYPE
+                        + " in ('video/mp4') and "
+                        + MediaStore.Video.Media.SIZE + " >0 ",
                 null,
-                MediaStore.Images.Media.DATE_ADDED + " desc");
+                MediaStore.Video.Media.DATE_ADDED + " desc");
         mOnPhotoLoadFinishListener = loadFinishListener;
     }
 
@@ -40,21 +42,25 @@ public class PhotoLoader extends CursorLoader implements LoaderManager.LoaderCal
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
         if (data != null) {
-            HashMap<String, ArrayList<String>> allPic = new LinkedHashMap<>();
+            HashMap<String, ArrayList<PhotoBean>> allPic = new LinkedHashMap<>();
             while (data.moveToNext()) {
-                // 获取图片的路径
-                String path = data.getString(data.getColumnIndex(MediaStore.Images.Media.DATA));
+                // 获取视频的路径
+                String path = data.getString(data.getColumnIndex(MediaStore.Video.Media.DATA));
+                PhotoBean bean = new PhotoBean();
+                bean.path = path;
                 File picFile = new File(path);
                 if (picFile.exists()) {
                     String parentName = picFile.getParentFile().getName();
                     if (allPic.containsKey(parentName)) {
-                        allPic.get(parentName).add(path);
+                        allPic.get(parentName).add(bean);
                     } else {
-                        ArrayList<String> chileList = new ArrayList<String>();
-                        chileList.add(path);
+                        ArrayList<PhotoBean> chileList = new ArrayList<>();
+                        chileList.add(bean);
                         allPic.put(parentName, chileList);
                     }
                 }
+                bean.size = data.getInt(data.getColumnIndex(MediaStore.Video.Media.SIZE));
+                bean.duration = data.getInt(data.getColumnIndex(MediaStore.Video.Media.DURATION));
             }
             if (mOnPhotoLoadFinishListener != null) {
                 mOnPhotoLoadFinishListener.onPhotoLoadFinish(allPic);
@@ -65,9 +71,5 @@ public class PhotoLoader extends CursorLoader implements LoaderManager.LoaderCal
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
 
-    }
-
-    public interface OnPhotoLoadFinishListener {
-        void onPhotoLoadFinish(HashMap<String, ArrayList<String>> photos);
     }
 }

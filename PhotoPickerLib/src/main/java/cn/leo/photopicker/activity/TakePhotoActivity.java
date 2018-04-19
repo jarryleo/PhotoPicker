@@ -1,6 +1,7 @@
 package cn.leo.photopicker.activity;
 
 import android.annotation.TargetApi;
+import android.app.LoaderManager;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -40,9 +41,11 @@ import cn.leo.photopicker.R;
 import cn.leo.photopicker.adapter.PhotoListAdapter;
 import cn.leo.photopicker.bean.PhotoBean;
 import cn.leo.photopicker.crop.CropUtil;
+import cn.leo.photopicker.loader.OnLoadFinishListener;
+import cn.leo.photopicker.loader.PhotoLoader;
+import cn.leo.photopicker.loader.VideoLoader;
 import cn.leo.photopicker.pick.FragmentCallback;
 import cn.leo.photopicker.pick.ImageCompressUtil;
-import cn.leo.photopicker.pick.MediaStoreContentObserver;
 import cn.leo.photopicker.pick.PhotoFolderPopupWindow;
 import cn.leo.photopicker.pick.PhotoOptions;
 import cn.leo.photopicker.pick.PhotoPickerFileProvider;
@@ -52,7 +55,7 @@ import cn.leo.photopicker.utils.PositionUtil;
 import cn.leo.photopicker.utils.ToastUtil;
 import cn.leo.photopicker.view.TransitionElement;
 
-public class TakePhotoActivity extends TransitionAnimActivity implements View.OnClickListener, PhotoListAdapter.OnSelectChangeListener {
+public class TakePhotoActivity extends TransitionAnimActivity implements View.OnClickListener, PhotoListAdapter.OnSelectChangeListener, OnLoadFinishListener {
     private static final String EXTRA_STARTING_ALBUM_POSITION = "extra_starting_item_position";
     public static final int REQUEST_CAMERA = 1;
     public static final int REQUEST_CHECK = 2;
@@ -68,7 +71,6 @@ public class TakePhotoActivity extends TransitionAnimActivity implements View.On
     private static PhotoOptions photoOptions;
     private TextView mBtnComplete;
     private LinearLayout mLlTitleContainer;
-    private MediaStoreContentObserver mMediaStoreContentObserver;
     private View mViewTop;
     private View mViewBottom;
 
@@ -164,10 +166,6 @@ public class TakePhotoActivity extends TransitionAnimActivity implements View.On
         mAdapter = new PhotoListAdapter(photoOptions, this);
         mRvPhotos.setAdapter(mAdapter);
         refreshData();
-        mMediaStoreContentObserver = new MediaStoreContentObserver(this, new Handler());
-        Uri imageUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
-        getContentResolver().registerContentObserver(imageUri, false,
-                mMediaStoreContentObserver);
     }
 
 
@@ -180,43 +178,31 @@ public class TakePhotoActivity extends TransitionAnimActivity implements View.On
         mBtnComplete.setText(text);
     }
 
-    @Override
-    protected void onDestroy() {
-        if (mMediaStoreContentObserver != null) {
-            getContentResolver().unregisterContentObserver(mMediaStoreContentObserver);
-        }
-        super.onDestroy();
-    }
-
+    //获取数据
     public void refreshData() {
-        new Thread() {
-            @Override
-            public void run() {
-                String title = "全部";
-                if (photoOptions.type == PhotoOptions.TYPE_PHOTO) {
-                    mDiskPhotos = PhotoProvider.getDiskPhotos(TakePhotoActivity.this);
-                } else {
-                    mDiskPhotos = PhotoProvider.getDiskVideos(TakePhotoActivity.this);
-                }
-                final ArrayList<PhotoBean> photoBeans;
-                if (mDiskPhotos.containsKey("Camera")) {
-                    photoBeans = mDiskPhotos.get("Camera");
-                    title = "Camera";
-                } else {
-                    photoBeans = PhotoProvider.getAllPhotos(mDiskPhotos);
-                }
-                final String s = title;
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mTvTitle.setText(s);
-                        mAdapter.setData(photoBeans);
-                    }
-                });
-            }
-        }.start();
+        LoaderManager.LoaderCallbacks loader;
+        if (photoOptions.type == PhotoOptions.TYPE_PHOTO) {
+            loader = new PhotoLoader(this, this);
+        } else {
+            loader = new VideoLoader(this, this);
+        }
+        getLoaderManager().initLoader(0, null, loader);
     }
 
+    @Override
+    public void onPhotoLoadFinish(HashMap<String, ArrayList<PhotoBean>> photos) {
+        String title = "全部";
+        mDiskPhotos = photos;
+        final ArrayList<PhotoBean> photoBeans;
+        if (mDiskPhotos.containsKey("Camera")) {
+            photoBeans = mDiskPhotos.get("Camera");
+            title = "Camera";
+        } else {
+            photoBeans = PhotoProvider.getAllPhotos(mDiskPhotos);
+        }
+        mTvTitle.setText(title);
+        mAdapter.setData(photoBeans);
+    }
 
     private void initView() {
         mViewTop = findViewById(R.id.viewTop);
@@ -528,10 +514,6 @@ public class TakePhotoActivity extends TransitionAnimActivity implements View.On
                     if (mCamImageName == null) return;
                     //刷新显示
                     String path = CropUtil.getCameraPath() + mCamImageName;
-                    PhotoBean bean = new PhotoBean();
-                    bean.path = path;
-                    mAdapter.add(0, bean);
-                    mAdapter.notifyDataSetChanged();
                     //通知系统相册更新
                     MediaScannerConnection.scanFile(this, new String[]{path}, null, null);
                     //需要裁剪

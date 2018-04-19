@@ -10,44 +10,45 @@ import cn.leo.photopicker.utils.LifeCycleUtil;
 
 public class PhotoPicker {
 
-    public static SelectPhoto selectPhoto(FragmentActivity context) {
-        return new SelectPhoto(context);
+    public static TakePhoto takePhoto(FragmentActivity context) {
+        return new TakePhoto(context);
     }
 
-    public static SelectVideo selectVideo(FragmentActivity context) {
-        return new SelectVideo(context);
+    public static TakeVideo takeVideo(FragmentActivity context) {
+        return new TakeVideo(context);
     }
 
     public interface PhotoCallBack {
         void onPicSelected(String[] path);
     }
 
-    public static class SelectPhoto {
+    public static class TakePhoto {
         private FragmentActivity mActivity;
         private PhotoOptions options = new PhotoOptions();
 
-        private SelectPhoto(FragmentActivity activity) {
+        private TakePhoto(FragmentActivity activity) {
             mActivity = activity;
+            options.type = PhotoOptions.TYPE_PHOTO;
         }
 
-        public SelectPhoto crop(int cropWidth, int cropHeight) {
+        public TakePhoto crop(int cropWidth, int cropHeight) {
             options.crop = true;
             options.cropWidth = cropWidth;
             options.cropHeight = cropHeight;
             return this;
         }
 
-        public SelectPhoto multi(int multi) {
+        public TakePhoto multi(int multi) {
             options.takeNum = multi;
             return this;
         }
 
-        public SelectPhoto sizeLimit(int size) {
+        public TakePhoto sizeLimit(int size) {
             options.size = size;
             return this;
         }
 
-        public SelectPhoto compress(int width, int height) {
+        public TakePhoto compress(int width, int height) {
             options.compressWidth = width;
             options.compressHeight = height;
             return this;
@@ -58,26 +59,26 @@ public class PhotoPicker {
         }
     }
 
-    public static class SelectVideo {
+    public static class TakeVideo {
         private FragmentActivity mActivity;
         private PhotoOptions options = new PhotoOptions();
 
-        private SelectVideo(FragmentActivity activity) {
+        private TakeVideo(FragmentActivity activity) {
             mActivity = activity;
             options.type = PhotoOptions.TYPE_VIDEO;
         }
 
-        public SelectVideo multi(int multi) {
+        public TakeVideo multi(int multi) {
             options.takeNum = multi;
             return this;
         }
 
-        public SelectVideo maxDuration(int duration) {
+        public TakeVideo maxDuration(int duration) {
             options.duration = duration;
             return this;
         }
 
-        public SelectVideo sizeLimit(int size) {
+        public TakeVideo sizeLimit(int size) {
             options.size = size;
             return this;
         }
