@@ -19,7 +19,7 @@
 	}
 ```
 
-#警告：
+# 注意：
 本库依赖依赖以下三个库 如果你的项目里面没有这3个依赖请加上，否则会崩溃，glide版本低于4.0
 ```
     implementation 'com.github.bumptech.glide:glide:3.7.0'
