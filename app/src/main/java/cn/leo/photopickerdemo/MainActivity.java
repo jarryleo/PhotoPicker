@@ -17,7 +17,7 @@ import java.util.Arrays;
 
 import cn.leo.photopicker.pick.PhotoPicker;
 
-public class MainActivity extends AppCompatActivity  {
+public class MainActivity extends AppCompatActivity {
 
     private ImageView mImageView;
     private ImageShow mLlContainer;
@@ -55,9 +55,9 @@ public class MainActivity extends AppCompatActivity  {
 
     public void selectSinglePhoto(View v) {
         //选择一张图片不裁剪
-        PhotoPicker.takeVideo(this)
-                //.compress(50, 50)
-                //.sizeLimit(10 * 1024)
+        PhotoPicker.takePhoto(this)
+                .compress(550, 550)
+                .sizeLimit(500 * 1024)
                 .take(new PhotoPicker.PhotoCallBack() {
                     @Override
                     public void onPicSelected(String[] path) {
@@ -69,6 +69,21 @@ public class MainActivity extends AppCompatActivity  {
                     }
                 });
     }
+
+    public void selectSingleVideo(View v) {
+        PhotoPicker.takeVideo(this)
+                .take(new PhotoPicker.PhotoCallBack() {
+                    @Override
+                    public void onPicSelected(String[] path) {
+                        Glide.with(MainActivity.this)
+                                .load(path[0])
+                                .centerCrop()
+                                .into(mImageView);
+                        Toast.makeText(MainActivity.this, "" + Arrays.toString(path), Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
 
     public void multiSelect(View v) {
         //选择多张图片

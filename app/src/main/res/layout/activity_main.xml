@@ -27,6 +27,12 @@
             android:onClick="selectSinglePhoto"
             android:text="单选"/>
 
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="selectSingleVideo"
+            android:text="单选视频"/>
+
     </LinearLayout>
 
 
