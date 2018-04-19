@@ -249,6 +249,7 @@ public class TakePhotoActivity extends TransitionAnimActivity implements View.On
         }
     }
 
+    //完成选择返回结果
     private void complete() {
         String[] p = new String[mAdapter.getSelectPhotos().size()];
         mAdapter.getSelectPhotos().toArray(p);

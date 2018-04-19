@@ -54,7 +54,7 @@ public class PhotoFolderPopupWindow extends PopupWindow implements
         });
         content.addOnAttachStateChangeListener(this);
 
-        mFolderView = (ListView) content.findViewById(R.id.lv_popup_folder);
+        mFolderView = content.findViewById(R.id.lv_popup_folder);
 
     }
 
@@ -141,9 +141,9 @@ public class PhotoFolderPopupWindow extends PopupWindow implements
         ViewHolder(View itemView) {
             this.itemView = itemView;
             itemView.setTag(this);
-            iv_image = (ImageView) itemView.findViewById(R.id.iv_folder);
-            tv_name = (TextView) itemView.findViewById(R.id.tv_folder_name);
-            tv_size = (TextView) itemView.findViewById(R.id.tv_size);
+            iv_image = itemView.findViewById(R.id.iv_folder);
+            tv_name = itemView.findViewById(R.id.tv_folder_name);
+            tv_size = itemView.findViewById(R.id.tv_size);
         }
 
         public void setData(String s) {
