@@ -11,9 +11,6 @@ import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import android.os.Message;
 import android.provider.MediaStore;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.FileProvider;
@@ -44,6 +41,7 @@ import cn.leo.photopicker.crop.CropUtil;
 import cn.leo.photopicker.loader.OnLoadFinishListener;
 import cn.leo.photopicker.loader.PhotoLoader;
 import cn.leo.photopicker.loader.VideoLoader;
+import cn.leo.photopicker.pick.CompressTask;
 import cn.leo.photopicker.pick.FragmentCallback;
 import cn.leo.photopicker.pick.ImageCompressUtil;
 import cn.leo.photopicker.pick.PhotoFolderPopupWindow;
@@ -60,19 +58,20 @@ public class TakePhotoActivity extends TransitionAnimActivity implements View.On
     public static final int REQUEST_CAMERA = 1;
     public static final int REQUEST_CHECK = 2;
     public static final int REQUEST_CLIP = 3;
+    private HashMap<String, ArrayList<PhotoBean>> mDiskPhotos;
     private ImageView mIvBack;
     private TextView mTvTitle;
     private ImageView mIvArrow;
     private RecyclerView mRvPhotos;
     private RelativeLayout mRlBar;
-    private HashMap<String, ArrayList<PhotoBean>> mDiskPhotos;
-    private PhotoListAdapter mAdapter;
     private String mCamImageName;
-    private static PhotoOptions photoOptions;
     private TextView mBtnComplete;
+    private PhotoListAdapter mAdapter;
+    private static PhotoOptions photoOptions;
     private LinearLayout mLlTitleContainer;
-    private View mViewTop;
+    private ProgressDialog mProgressDialog;
     private View mViewBottom;
+    private View mViewTop;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -268,36 +267,31 @@ public class TakePhotoActivity extends TransitionAnimActivity implements View.On
                     //需要压缩
                     compress();
                 } else {
-                    mHandler.obtainMessage(0, p).sendToTarget();
+                    result(p);
                 }
             }
         }
     }
 
-
-    Handler mHandler = new Handler(Looper.getMainLooper(), new Handler.Callback() {
-        @Override
-        public boolean handleMessage(Message msg) {
-            String[] compressPaths = (String[]) msg.obj;
-            Intent data = new Intent();
-            data.putExtra("imgList", compressPaths);
-            setResult(RESULT_OK, data);
-            if (mProgressDialog != null) {
-                mProgressDialog.dismiss();
-            }
-            finish();
-            return true;
+    /**
+     * 返回结果
+     *
+     * @param paths 返回的路径数组
+     */
+    private void result(String paths[]) {
+        Intent data = new Intent();
+        data.putExtra("imgList", paths);
+        setResult(RESULT_OK, data);
+        if (mProgressDialog != null) {
+            mProgressDialog.dismiss();
         }
-    });
-    ProgressDialog mProgressDialog;
+        finish();
+    }
+
 
     //提取视频缩略图
     private void getThumb(final String[] videoPaths) {
-        if (mProgressDialog == null) {
-            mProgressDialog = new ProgressDialog(this);
-            mProgressDialog.setMessage("视频处理中，请稍候...");
-            mProgressDialog.setCancelable(false);
-        }
+        showDialog("视频处理中，请稍候...");
         mProgressDialog.show();
         for (int i = 0; i < mAdapter.getSelectPhotos().size(); i++) {
             final String path = mAdapter.getSelectPhotos().get(i);
@@ -314,40 +308,28 @@ public class TakePhotoActivity extends TransitionAnimActivity implements View.On
                         }
                     });
         }
-        mHandler.obtainMessage(0, videoPaths).sendToTarget();
+        result(videoPaths);
+    }
+
+
+    private void showDialog(String msg) {
+        if (mProgressDialog == null) {
+            mProgressDialog = new ProgressDialog(TakePhotoActivity.this);
+            mProgressDialog.setMessage(msg);
+            mProgressDialog.setCancelable(false);
+        }
+        mProgressDialog.show();
     }
 
     //压缩图片
     private void compress() {
-        if (mProgressDialog == null) {
-            mProgressDialog = new ProgressDialog(this);
-            mProgressDialog.setMessage("图片压缩中，请稍候...");
-            mProgressDialog.setCancelable(false);
-        }
-        mProgressDialog.show();
-        new Thread() {
+        showDialog("图片压缩中，请稍候...");
+        new CompressTask(photoOptions, new CompressTask.onCompressResultListener() {
             @Override
-            public void run() {
-                String[] compressPaths = new String[mAdapter.getSelectPhotos().size()];
-                for (int i = 0; i < mAdapter.getSelectPhotos().size(); i++) {
-                    String selectPhoto = mAdapter.getSelectPhotos().get(i);
-                    File file = new File(selectPhoto);
-                    if (photoOptions.size > 0 && file.length() < photoOptions.size) {
-                        compressPaths[i] = selectPhoto;
-                    } else {
-                        String descPath = CropUtil.getCachePath() + file.getName();
-                        long compressPx = ImageCompressUtil.compressPx(selectPhoto, descPath, photoOptions);
-                        int quality = 90;
-                        while (photoOptions.size > 0 && compressPx > photoOptions.size && quality > 10) {
-                            compressPx = ImageCompressUtil.compressPx(descPath, photoOptions, quality);
-                            quality -= 10;
-                        }
-                        compressPaths[i] = descPath;
-                    }
-                }
-                mHandler.obtainMessage(0, compressPaths).sendToTarget();
+            public void onCompressResult(String[] paths) {
+                result(paths);
             }
-        }.start();
+        }).execute(mAdapter);
     }
 
     //图片文件夹选择
@@ -416,15 +398,8 @@ public class TakePhotoActivity extends TransitionAnimActivity implements View.On
                 return;
             }
             PositionUtil.pohotoPosition = position;
-            //点击一张照片
-//            String path = mAdapter.getPhoto(position - 1).path;
-//            ArrayList<String> pathList = new ArrayList<>();
-//            pathList.add(path);
             //照片预览
             Intent intent = new Intent(this, PhotoShowActivity.class);
-//            intent.putExtra("check", mAdapter.getSelectPhotos().contains(path)); //传递选中
-//            intent.putStringArrayListExtra("images", pathList); //预览一张
-            //预览所有
             intent.putExtra(EXTRA_STARTING_ALBUM_POSITION, position - 1);
             intent.putStringArrayListExtra("images", mAdapter.getAllPhotoPaths());
             intent.putStringArrayListExtra("check", mAdapter.getSelectPhotos());
@@ -531,7 +506,7 @@ public class TakePhotoActivity extends TransitionAnimActivity implements View.On
                 case REQUEST_CLIP:
                     String cropPath = data.getStringExtra("path");
                     String[] paths = new String[]{cropPath};
-                    mHandler.obtainMessage(0, paths).sendToTarget();
+                    result(paths);
                     break;
             }
         }
@@ -560,5 +535,12 @@ public class TakePhotoActivity extends TransitionAnimActivity implements View.On
         if (mAdapter.getItemCount() == 1) {
             initPermission();
         }
+    }
+
+    @Override
+    protected void onDestroy() {
+        mDiskPhotos.clear();
+        mAdapter.mList.clear();
+        super.onDestroy();
     }
 }

@@ -27,9 +27,11 @@
 
         <activity
             android:name=".activity.CropActivity"
+            android:launchMode="singleTask"
             android:theme="@style/PhotoPickerTheme"/>
         <activity
             android:name=".activity.PhotoShowActivity"
+            android:launchMode="singleTask"
             android:theme="@style/PhotoPickerTheme"/>
     </application>
 

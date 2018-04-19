@@ -2,6 +2,8 @@ package cn.leo.photopicker.pick;
 
 import android.support.v4.app.FragmentActivity;
 
+import java.lang.ref.WeakReference;
+
 import cn.leo.photopicker.utils.LifeCycleUtil;
 
 /**
@@ -9,11 +11,11 @@ import cn.leo.photopicker.utils.LifeCycleUtil;
  */
 
 public class TakePhoto {
-    private FragmentActivity mActivity;
+    private WeakReference<FragmentActivity> mActivity;
     private PhotoOptions options = new PhotoOptions();
 
     TakePhoto(FragmentActivity activity) {
-        mActivity = activity;
+        mActivity = new WeakReference<>(activity);
         options.type = PhotoOptions.TYPE_PHOTO;
     }
 
@@ -41,6 +43,6 @@ public class TakePhoto {
     }
 
     public void take(PhotoPicker.PhotoCallBack callBack) {
-        LifeCycleUtil.setLifeCycleListener(mActivity, options, callBack);
+        LifeCycleUtil.setLifeCycleListener(mActivity.get(), options, callBack);
     }
 }

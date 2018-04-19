@@ -117,4 +117,10 @@ public class PhotoShowActivity extends Activity {
         setResult(RESULT_OK, data);
         super.finishAfterTransition();
     }
+
+    @Override
+    protected void onDestroy() {
+        mImages.clear();
+        super.onDestroy();
+    }
 }

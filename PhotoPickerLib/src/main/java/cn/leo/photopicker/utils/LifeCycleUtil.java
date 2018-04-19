@@ -16,6 +16,7 @@ public class LifeCycleUtil {
     public static void setLifeCycleListener(FragmentActivity activity,
                                             PhotoOptions options,
                                             PhotoPicker.PhotoCallBack callBack) {
+        if (activity == null) return;
         String tag = "fragmentCallBack";
         FragmentManager fragmentManager = activity.getSupportFragmentManager();
         Fragment fragmentByTag = fragmentManager.findFragmentByTag(tag);

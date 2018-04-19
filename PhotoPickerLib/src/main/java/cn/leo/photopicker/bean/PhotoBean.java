@@ -10,7 +10,6 @@ public class PhotoBean {
     public String path;
     public int size;
     public int duration;
-    public boolean checked;
 
     @SuppressLint("DefaultLocale")
     public String getTime() {
