@@ -15,7 +15,7 @@
 ## Step 2. Add the dependency
 ```
 	dependencies {
-	        compile 'com.github.jarryleo:PhotoPicker:v2.0.2'
+	        compile 'com.github.jarryleo:PhotoPicker:v2.0.3'
 	}
 ```
 
