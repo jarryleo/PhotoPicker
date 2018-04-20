@@ -260,6 +260,15 @@ public class BannerView extends FrameLayout implements ViewPager.OnPageChangeLis
         }
     }
 
+    @Override
+    public boolean onInterceptTouchEvent(MotionEvent ev) {
+        try {
+            return super.onInterceptTouchEvent(ev);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
 
     /**
      * 图片加载器用户自己实现
