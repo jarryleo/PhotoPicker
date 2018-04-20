@@ -50,6 +50,9 @@ public class PhotoListAdapter extends BaseRVAdapter<PhotoBean> implements PhotoL
         ArrayList<String> list = new ArrayList<>();
         int min = position > 500 ? position - 500 : 0;
         int max = min + 1000 > mList.size() ? mList.size() : min + 1000;
+        if (max - min < 1000) {
+            min = max - 1000 < 0 ? 0 : max - 1000;
+        }
         for (int i = min; i < max; i++) {
             list.add(mList.get(i).path);
         }
