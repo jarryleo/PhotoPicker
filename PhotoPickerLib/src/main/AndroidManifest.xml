@@ -12,6 +12,7 @@
         android:supportsRtl="true">
         <activity
             android:name=".activity.TakePhotoActivity"
+            android:configChanges="orientation|screenSize|keyboardHidden"
             android:launchMode="singleTask"
             android:theme="@style/PhotoPickerTheme"/>
 

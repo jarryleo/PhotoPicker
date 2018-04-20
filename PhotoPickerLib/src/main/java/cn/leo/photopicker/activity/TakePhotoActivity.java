@@ -4,6 +4,8 @@ import android.annotation.TargetApi;
 import android.app.LoaderManager;
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Rect;
@@ -33,6 +35,7 @@ import com.bumptech.glide.request.target.SimpleTarget;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import cn.leo.photopicker.R;
 import cn.leo.photopicker.adapter.PhotoListAdapter;
@@ -402,7 +405,7 @@ public class TakePhotoActivity extends TransitionAnimActivity implements View.On
             //照片预览
             Intent intent = new Intent(this, PhotoShowActivity.class);
             intent.putExtra(EXTRA_STARTING_ALBUM_POSITION, position - 1);
-            intent.putStringArrayListExtra("images", mAdapter.getAllPhotoPaths());
+            intent.putStringArrayListExtra("images", mAdapter.getAllPhotoPaths(position - 1));
             intent.putStringArrayListExtra("check", mAdapter.getSelectPhotos());
             intent.putExtra("max", photoOptions.takeNum);
             //共享动画
@@ -457,13 +460,6 @@ public class TakePhotoActivity extends TransitionAnimActivity implements View.On
         File out = new File(savePath, mCamImageName);
         //android N 系统适配
         Intent intent = new Intent();
-        Uri uri;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            String provider = getPackageName() + "." + PhotoPickerFileProvider.class.getSimpleName();
-            uri = FileProvider.getUriForFile(this, provider, out);
-        } else {
-            uri = Uri.fromFile(out);
-        }
         //视频选取条件限制
         if (photoOptions.type == PhotoOptions.TYPE_VIDEO) {
             intent.setAction(MediaStore.ACTION_VIDEO_CAPTURE);
@@ -478,6 +474,23 @@ public class TakePhotoActivity extends TransitionAnimActivity implements View.On
         } else {
             intent.setAction(MediaStore.ACTION_IMAGE_CAPTURE);
         }
+        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        Uri uri;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            String provider = getPackageName() + "." + PhotoPickerFileProvider.class.getSimpleName();
+            uri = FileProvider.getUriForFile(this, provider, out);
+            //加入uri权限
+            List<ResolveInfo> infoList = getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
+            for (ResolveInfo resolveInfo : infoList) {
+                String packageName = resolveInfo.activityInfo.packageName;
+                grantUriPermission(packageName,uri,
+                        Intent.FLAG_GRANT_WRITE_URI_PERMISSION |
+                                Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            }
+        } else {
+            uri = Uri.fromFile(out);
+        }
+
         intent.putExtra(MediaStore.EXTRA_OUTPUT, uri);
         startActivityForResult(intent, REQUEST_CAMERA);
     }

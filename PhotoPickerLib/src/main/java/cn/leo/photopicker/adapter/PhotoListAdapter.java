@@ -46,10 +46,12 @@ public class PhotoListAdapter extends BaseRVAdapter<PhotoBean> implements PhotoL
         return mList.get(position);
     }
 
-    public ArrayList<String> getAllPhotoPaths() {
+    public ArrayList<String> getAllPhotoPaths(int position) {
         ArrayList<String> list = new ArrayList<>();
-        for (PhotoBean allPhoto : mList) {
-            list.add(allPhoto.path);
+        int min = position > 500 ? position - 500 : 0;
+        int max = min + 1000 > mList.size() ? mList.size() : min + 1000;
+        for (int i = min; i < max; i++) {
+            list.add(mList.get(i).path);
         }
         return list;
     }
