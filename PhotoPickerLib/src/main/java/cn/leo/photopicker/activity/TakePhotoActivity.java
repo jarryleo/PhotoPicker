@@ -377,9 +377,10 @@ public class TakePhotoActivity extends TransitionAnimActivity implements View.On
             initCameraPermission();
 
         } else {
+            String path = mAdapter.getPhoto(position - 1).path;
             //视频预览
             if (photoOptions.type == PhotoOptions.TYPE_VIDEO) {
-                File file = new File(mAdapter.getPhoto(position - 1).path);
+                File file = new File(path);
                 Intent intent = new Intent(Intent.ACTION_VIEW);
                 Uri uri;
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
@@ -403,9 +404,11 @@ public class TakePhotoActivity extends TransitionAnimActivity implements View.On
             }
             PositionUtil.pohotoPosition = position;
             //照片预览
+            ArrayList<String> allPhotoPaths = mAdapter.getAllPhotoPaths(position - 1);
+            int p = allPhotoPaths.indexOf(path);
             Intent intent = new Intent(this, PhotoShowActivity.class);
-            intent.putExtra(EXTRA_STARTING_ALBUM_POSITION, position - 1);
-            intent.putStringArrayListExtra("images", mAdapter.getAllPhotoPaths(position - 1));
+            intent.putExtra(EXTRA_STARTING_ALBUM_POSITION, p);
+            intent.putStringArrayListExtra("images", allPhotoPaths);
             intent.putStringArrayListExtra("check", mAdapter.getSelectPhotos());
             intent.putExtra("max", photoOptions.takeNum);
             //共享动画
@@ -417,6 +420,7 @@ public class TakePhotoActivity extends TransitionAnimActivity implements View.On
     @Override
     public View getItemByPosition(int currentPosition) {
         //mRvPhotos.scrollToPosition(currentPosition);
+        currentPosition += mAdapter.getStart();
         GridLayoutManager layoutManager = (GridLayoutManager) mRvPhotos.getLayoutManager();
         int first = layoutManager.findFirstVisibleItemPosition();
         int last = layoutManager.findLastVisibleItemPosition();
@@ -483,7 +487,7 @@ public class TakePhotoActivity extends TransitionAnimActivity implements View.On
             List<ResolveInfo> infoList = getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
             for (ResolveInfo resolveInfo : infoList) {
                 String packageName = resolveInfo.activityInfo.packageName;
-                grantUriPermission(packageName,uri,
+                grantUriPermission(packageName, uri,
                         Intent.FLAG_GRANT_WRITE_URI_PERMISSION |
                                 Intent.FLAG_GRANT_READ_URI_PERMISSION);
             }

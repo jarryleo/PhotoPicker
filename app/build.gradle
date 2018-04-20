@@ -29,6 +29,6 @@ dependencies {
     implementation 'com.android.support:design:26.1.0'
     testImplementation 'junit:junit:4.12'
     implementation 'com.github.bumptech.glide:glide:3.7.0'
-    //implementation project(':PhotoPickerLib')
-    implementation 'com.github.jarryleo:PhotoPicker:v2.0.2'
+    implementation project(':PhotoPickerLib')
+    //implementation 'com.github.jarryleo:PhotoPicker:v2.0.2'
 }

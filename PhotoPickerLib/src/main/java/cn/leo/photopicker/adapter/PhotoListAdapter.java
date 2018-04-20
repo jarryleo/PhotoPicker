@@ -21,6 +21,7 @@ public class PhotoListAdapter extends BaseRVAdapter<PhotoBean> implements PhotoL
     private ArrayList<String> mSelectPhotos = new ArrayList<>();
     private PhotoOptions mPhotoOptions;
     private OnSelectChangeListener mOnSelectChangeListener;
+    private int mStart;
 
     public PhotoListAdapter(PhotoOptions photoOptions,
                             OnSelectChangeListener onSelectChangeListener) {
@@ -53,10 +54,15 @@ public class PhotoListAdapter extends BaseRVAdapter<PhotoBean> implements PhotoL
         if (max - min < 1000) {
             min = max - 1000 < 0 ? 0 : max - 1000;
         }
+        mStart = min;
         for (int i = min; i < max; i++) {
             list.add(mList.get(i).path);
         }
         return list;
+    }
+
+    public int getStart() {
+        return mStart;
     }
 
     @Override
